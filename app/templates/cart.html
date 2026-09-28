@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}장바구니 | VIBE-FASHION{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- 헤더 -->
+    <div class="text-center mb-5">
+        <span class="badge rounded-pill px-3 py-2 text-white mb-2" style="background: linear-gradient(135deg, #7c3aed, #9333ea);">
+            SHOPPING CART
+        </span>
+        <h2 class="fw-bold mt-2">장바구니</h2>
+        <p class="text-muted">선택하신 상품 목록입니다. 수량을 조절하거나 주문을 진행하실 수 있습니다.</p>
+        <div class="mx-auto" style="width: 50px; height: 3px; background: #7c3aed; border-radius: 2px;"></div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show small mb-4 shadow-sm" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if cart_items %}
+    <div class="row g-4">
+        <!-- 좌측: 장바구니 상품 목록 -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-3">
+                <div class="d-flex justify-content-between align-items-center pb-3 border-bottom mb-3">
+                    <h5 class="fw-bold mb-0">담은 상품 ({{ cart_items|length }}종류)</h5>
+                    <form method="POST" action="{{ url_for('main.clear_cart') }}" onsubmit="return confirm('장바구니를 모두 비우시겠습니까?');">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill">
+                            <i class="bi bi-trash3 me-1"></i>전체 비우기
+                        </button>
+                    </form>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="table-light small">
+                            <tr>
+                                <th scope="col" style="min-width: 220px;">상품 정보</th>
+                                <th scope="col" class="text-center">단가</th>
+                                <th scope="col" class="text-center" style="min-width: 130px;">수량 조절</th>
+                                <th scope="col" class="text-center">소계</th>
+                                <th scope="col" class="text-center">삭제</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ item.image }}" alt="{{ item.name }}" class="rounded-3 me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                                        <div>
+                                            <span class="badge bg-secondary-subtle text-secondary small">{{ item.category }}</span>
+                                            <div class="fw-bold text-dark small mt-1">{{ item.name }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center fw-semibold">{{ item.unit_price_formatted }}원</td>
+                                <td class="text-center">
+                                    <div class="d-inline-flex align-items-center border rounded-pill px-2 py-1 bg-light">
+                                        <!-- 수량 감소 -->
+                                        <form method="POST" action="{{ url_for('main.update_cart', product_id=item.id, action='decrease') }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-link text-dark p-0 px-1 text-decoration-none">
+                                                <i class="bi bi-dash-lg"></i>
+                                            </button>
+                                        </form>
+                                        <!-- 현재 수량 -->
+                                        <span class="fw-bold px-2 small">{{ item.quantity }}</span>
+                                        <!-- 수량 증가(갯수 추가) -->
+                                        <form method="POST" action="{{ url_for('main.update_cart', product_id=item.id, action='increase') }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-link text-dark p-0 px-1 text-decoration-none">
+                                                <i class="bi bi-plus-lg"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                                <td class="text-center fw-bold" style="color: #7c3aed;">
+                                    {{ "{:,}".format(item.subtotal) }}원
+                                </td>
+                                <td class="text-center">
+                                    <form method="POST" action="{{ url_for('main.update_cart', product_id=item.id, action='remove') }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" title="삭제">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <a href="{{ url_for('main.index') }}#products" class="btn btn-outline-dark rounded-pill px-4 py-2 small fw-semibold">
+                <i class="bi bi-arrow-left me-1"></i>쇼핑 계속하기
+            </a>
+        </div>
+
+        <!-- 우측: 결제 금액 요약 -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white sticky-top" style="top: 100px;">
+                <h5 class="fw-bold mb-4 pb-2 border-bottom">주문 결제 요약</h5>
+                <div class="d-flex justify-content-between mb-2 small text-secondary">
+                    <span>총 상품금액</span>
+                    <span>{{ "{:,}".format(total_price) }}원</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 small text-secondary">
+                    <span>배송비</span>
+                    <span>{% if total_price >= 50000 or total_price == 0 %}무료 (0원){% else %}3,000원{% endif %}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 small text-secondary">
+                    <span>총 상품 수량</span>
+                    <span>{{ total_count }}개</span>
+                </div>
+                <hr class="text-muted">
+                <div class="d-flex justify-content-between mb-4">
+                    <span class="fw-bold">최종 결제 예정 금액</span>
+                    <span class="fw-bold fs-4" style="color: #7c3aed;">
+                        {% set shipping = 0 if (total_price >= 50000 or total_price == 0) else 3000 %}
+                        {{ "{:,}".format(total_price + shipping) }}원
+                    </span>
+                </div>
+                <button type="button" class="btn text-white w-100 py-3 fw-bold rounded-pill shadow-sm" style="background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);" onclick="alert('주문 결제 기능이 연동되었습니다.');">
+                    <i class="bi bi-credit-card me-2"></i>주문서 작성하기
+                </button>
+                <div class="small text-center text-muted mt-3">
+                    50,000원 이상 구매 시 <strong>무료 배송</strong> 혜택!
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- 빈 장바구니 -->
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white my-4">
+        <div class="rounded-circle d-inline-flex p-4 mx-auto mb-3" style="background-color: #f3e8ff; color: #7c3aed;">
+            <i class="bi bi-cart-x fs-1"></i>
+        </div>
+        <h4 class="fw-bold">장바구니가 비어 있습니다.</h4>
+        <p class="text-muted small mb-4">VIBE-FASHION의 트렌디한 패션 의류와 악세사리를 담아보세요!</p>
+        <div>
+            <a href="{{ url_for('main.index') }}#products" class="btn text-white px-5 py-3 rounded-pill fw-bold shadow-sm" style="background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);">
+                <i class="bi bi-bag-check me-2"></i>인기 상품 둘러보기
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

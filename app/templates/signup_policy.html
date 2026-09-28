@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}회원가입 정책 및 이용약관 | VIBE-FASHION{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- 헤더 -->
+    <div class="text-center mb-5">
+        <span class="badge rounded-pill px-3 py-2 text-white mb-2" style="background: linear-gradient(135deg, #7c3aed, #9333ea);">
+            MEMBERSHIP TERMS & POLICY
+        </span>
+        <h2 class="fw-bold mt-2">회원가입 정책 및 이용약관</h2>
+        <p class="text-muted">VIBE-FASHION 회원 정책, 개인정보 보호 및 회원 혜택/의무에 관한 정책 안내입니다.</p>
+        <div class="mx-auto" style="width: 50px; height: 3px; background: #7c3aed; border-radius: 2px;"></div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- 1. 핵심 혜택 및 가입 안내 -->
+            <div class="row g-4 mb-5">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-white">
+                        <div class="rounded-circle d-inline-flex p-3 mx-auto mb-3" style="background-color: #f3e8ff; color: #7c3aed;">
+                            <i class="bi bi-gift-fill fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold">웰컴 10% 쿠폰</h5>
+                        <p class="small text-muted mb-0">신규 가입 즉시 전 상품에 사용 가능한 10% 웰컴 할인 쿠폰이 자동 지급됩니다.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-white">
+                        <div class="rounded-circle d-inline-flex p-3 mx-auto mb-3" style="background-color: #f3e8ff; color: #7c3aed;">
+                            <i class="bi bi-person-check-fill fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold">간편 가입 & 안전 보안</h5>
+                        <p class="small text-muted mb-0">이메일과 비밀번호로 10초 만에 가입하며 고객님의 개인정보는 암호화 보호됩니다.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-white">
+                        <div class="rounded-circle d-inline-flex p-3 mx-auto mb-3" style="background-color: #f3e8ff; color: #7c3aed;">
+                            <i class="bi bi-door-open-fill fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold">언제든 자유로운 탈퇴</h5>
+                        <p class="small text-muted mb-0">복잡한 절차 없이 마이페이지에서 언제든지 즉시 회원 탈퇴 및 개인정보 파기가 가능합니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 세부 정책 규정 -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-4">
+                <h4 class="fw-bold text-dark mb-4 pb-2 border-bottom d-flex align-items-center">
+                    <i class="bi bi-journal-text text-purple me-2" style="color: #7c3aed;"></i>회원 정책 세부 조항
+                </h4>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark"><i class="bi bi-check-circle-fill me-2" style="color: #7c3aed;"></i>제1조 (목적 및 회원 자격)</h6>
+                    <p class="small text-secondary ps-4 mb-0">
+                        본 약관은 VIBE-FASHION이 제공하는 전자상거래 서비스의 가입, 이용 및 탈퇴에 관한 권리와 의무를 규정함을 목적으로 합니다.
+                        만 14세 이상의 대한민국 거주자는 누구나 무료로 회원가입을 신청할 수 있습니다.
+                    </p>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark"><i class="bi bi-check-circle-fill me-2" style="color: #7c3aed;"></i>제2조 (회원가입 절차 및 정보 보호)</h6>
+                    <ul class="small text-secondary ps-4 mb-0">
+                        <li>이용자는 소정의 가입 양식에 이메일, 이름, 비밀번호를 기입하여 가입을 신청합니다.</li>
+                        <li>타인의 명의를 도용하거나 허위 정보를 등록할 경우 회원 자격이 상실될 수 있습니다.</li>
+                        <li>수집된 개인정보는 관계 법령에 따라 엄격히 보호되며, 상거래 계약 이행 목적 외에 제3자에게 무단 제공되지 않습니다.</li>
+                    </ul>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark"><i class="bi bi-check-circle-fill me-2" style="color: #7c3aed;"></i>제3조 (회원의 권리와 혜택)</h6>
+                    <ul class="small text-secondary ps-4 mb-0">
+                        <li>가입 즉시 장바구니 담기, 수량 조절, 주문 및 배송조회 기능을 자유롭게 이용하실 수 있습니다.</li>
+                        <li>구매 실적에 따라 등급별(BRONZE, SILVER, GOLD, VIP) 특별 적립금 및 상시 할인 혜택이 적용됩니다.</li>
+                    </ul>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark"><i class="bi bi-check-circle-fill me-2" style="color: #7c3aed;"></i>제4조 (회원 탈퇴 및 개인정보 처리)</h6>
+                    <ul class="small text-secondary ps-4 mb-0">
+                        <li>회원은 언제든지 로그인 후 마이페이지의 <strong>[회원 탈퇴]</strong> 버튼을 통해 즉시 계약을 해지할 수 있습니다.</li>
+                        <li>탈퇴 시 보유 중인 할인쿠폰, 적립금, 장바구니 내역은 즉시 소멸 처리됩니다.</li>
+                        <li>전자상거래 등에서의 소비자보호에 관한 법률 등 관련 법령에 따라 보존 의무가 있는 결제 및 주문 기록은 법정 보존 기간(5년) 동안 안전하게 별도 보관된 후 영구 파기됩니다.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 하단 가입 버튼 배너 -->
+            <div class="card border-0 rounded-4 p-4 text-center text-white" style="background: linear-gradient(135deg, #4c1d95 0%, #6b21a8 100%);">
+                <h5 class="fw-bold mb-2">VIBE-FASHION의 특별한 회원이 되어보세요!</h5>
+                <p class="small text-light opacity-90 mb-3">지금 가입하시면 10% 웰컴 쿠폰과 함께 트렌디한 신상품을 바로 만나보실 수 있습니다.</p>
+                <div>
+                    <a href="{{ url_for('main.register') }}" class="btn btn-light px-4 py-2 rounded-pill fw-bold" style="color: #6b21a8;">
+                        <i class="bi bi-person-plus-fill me-2"></i>회원가입 하러가기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

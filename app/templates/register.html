@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}회원가입 | VIBE-FASHION{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                <div class="text-center mb-4">
+                    <div class="rounded-circle d-inline-flex p-3 mb-3" style="background-color: #f3e8ff; color: #7c3aed;">
+                        <i class="bi bi-person-plus-fill fs-2"></i>
+                    </div>
+                    <h3 class="fw-bold">회원가입</h3>
+                    <p class="text-muted small">신규 가입 시 10% 웰컴 쿠폰 즉시 지급!</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show small mb-3" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('main.register') }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold small text-secondary">이름 *</label>
+                        <input type="text" class="form-control rounded-3 py-2" id="name" name="name" placeholder="홍길동" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold small text-secondary">이메일 주소 *</label>
+                        <input type="email" class="form-control rounded-3 py-2" id="email" name="email" placeholder="example@email.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-semibold small text-secondary">비밀번호 *</label>
+                        <input type="password" class="form-control rounded-3 py-2" id="password" name="password" placeholder="6자리 이상 입력해주세요" minlength="6" required>
+                    </div>
+
+                    <!-- 회원가입 정책 동의 체크박스 -->
+                    <div class="form-check mb-4 p-3 rounded-3 bg-light">
+                        <input class="form-check-input" type="checkbox" id="policyAgree" name="policy_agree" required>
+                        <label class="form-check-label small text-dark" for="policyAgree">
+                            <span class="text-danger fw-bold">[필수]</span> 
+                            <a href="{{ url_for('main.signup_policy') }}" target="_blank" class="fw-semibold text-decoration-underline" style="color: #7c3aed;">
+                                회원가입 정책 및 이용약관
+                            </a>에 동의합니다.
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn text-white w-100 py-3 fw-bold rounded-pill shadow-sm" style="background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);">
+                        동의하고 회원가입 완료
+                    </button>
+                </form>
+
+                <hr class="my-4 text-muted">
+
+                <div class="text-center small text-muted">
+                    이미 계정이 있으신가요? 
+                    <a href="{{ url_for('main.login') }}" class="fw-bold text-decoration-none" style="color: #7c3aed;">로그인하기</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
