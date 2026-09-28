@@ -100,6 +100,33 @@ VALUES
         29000,
         NULL,
         true
+    ),
+    (
+        (SELECT id FROM public.categories WHERE slug = 'acc'),
+        'KUMTTON 스퀘어 자개 다이얼 실버 메쉬 시계',
+        'kumtton-square-mesh-watch',
+        '우아한 스퀘어 실버 프레임과 은은한 빛의 자개 다이얼이 돋보이는 쿼츠 손목시계입니다.',
+        89000,
+        NULL,
+        true
+    ),
+    (
+        (SELECT id FROM public.categories WHERE slug = 'bottom'),
+        '투턱 와이드 슬랙스 팬츠',
+        'two-tuck-wide-slacks',
+        '깔끔하게 떨어지는 투턱 핀턱 디테일과 하이웨이스트 와이드 핏 슬랙스입니다.',
+        45000,
+        NULL,
+        true
+    ),
+    (
+        (SELECT id FROM public.categories WHERE slug = 'dress'),
+        '모던 슬림 골지 니트 롱 원피스',
+        'modern-slim-knit-long-dress',
+        '우아하고 단정한 무드를 연출해주는 프리미엄 골지 니트 롱 원피스입니다.',
+        52000,
+        NULL,
+        true
     )
 ON CONFLICT (slug) DO UPDATE 
 SET 

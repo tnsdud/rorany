@@ -126,6 +126,84 @@ def index():
             "sub_desc": "트렌디한 오버핏 / 고밀도 원단",
             "image": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&auto=format&fit=crop&q=80",
             "description": "어떤 룩에도 자연스럽게 어우러지는 트렌디한 오버핏 실루엣 블레이저"
+        },
+        # --- 의류 (원피스, 바지, 티셔츠 등) ---
+        {
+            "id": 11,
+            "name": "플로럴 쉬폰 미디 랩 원피스",
+            "category": "DRESS",
+            "badge": "BEST",
+            "price": "48,000",
+            "original_price": "58,000",
+            "sub_desc": "여리여리한 랩 실루엣 / 페미닌 무드",
+            "image": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80",
+            "description": "화사한 플라워 패턴과 허리 리본 디테일이 돋보이는 쉬폰 랩 미디 원피스"
+        },
+        {
+            "id": 12,
+            "name": "모던 슬림 골지 니트 롱 원피스",
+            "category": "DRESS",
+            "badge": "NEW",
+            "price": "52,000",
+            "original_price": None,
+            "sub_desc": "탄탄한 골지 텍스처 / 슬림 핏 라인",
+            "image": "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&auto=format&fit=crop&q=80",
+            "description": "우아하고 단정한 무드를 연출해주는 프리미엄 골지 니트 롱 원피스"
+        },
+        {
+            "id": 13,
+            "name": "투턱 와이드 슬랙스 팬츠",
+            "category": "PANTS",
+            "badge": "BEST",
+            "price": "45,000",
+            "original_price": "52,000",
+            "sub_desc": "체형 커버 투턱 라인 / 롱 레그 실루엣",
+            "image": "https://images.unsplash.com/photo-1509551388413-e18d0ac5d495?w=800&auto=format&fit=crop&q=80",
+            "description": "깔끔하게 떨어지는 투턱 핀턱 디테일과 하이웨이스트 와이드 핏 슬랙스"
+        },
+        {
+            "id": 14,
+            "name": "데일리 빈티지 와이드 데님 팬츠",
+            "category": "PANTS",
+            "badge": "MD추천",
+            "price": "42,000",
+            "original_price": None,
+            "sub_desc": "은은한 워싱 & 탄탄한 코튼 100%",
+            "image": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800&auto=format&fit=crop&q=80",
+            "description": "사계절 내내 다양하게 코디하기 좋은 미드 블루 컬러의 와이드 데님 팬츠"
+        },
+        {
+            "id": 15,
+            "name": "베이직 헤비 코튼 크롭 반팔 티셔츠",
+            "category": "TOP",
+            "badge": "BEST",
+            "price": "24,000",
+            "original_price": "29,000",
+            "sub_desc": "탄탄한 20수 코튼 / 넥라인 늘어짐 방지",
+            "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80",
+            "description": "군더더기 없는 베이직 디자인과 트렌디한 크롭 기장의 데일리 반팔 티셔츠"
+        },
+        {
+            "id": 16,
+            "name": "프렌치 빈티지 레터링 오버핏 티셔츠",
+            "category": "TOP",
+            "badge": "NEW",
+            "price": "28,000",
+            "original_price": None,
+            "sub_desc": "감각적인 컬러 배색 / 여유로운 루즈핏",
+            "image": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=800&auto=format&fit=crop&q=80",
+            "description": "빈티지 무드의 프렌치 감성 폰트가 포인트인 루즈핏 오버사이즈 티셔츠"
+        },
+        {
+            "id": 17,
+            "name": "클래식 릴렉스드 스트라이프 셔츠",
+            "category": "TOP",
+            "badge": "MD추천",
+            "price": "46,000",
+            "original_price": "54,000",
+            "sub_desc": "내추럴 링클 프리 코튼 / 모던 캐주얼",
+            "image": "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=800&auto=format&fit=crop&q=80",
+            "description": "단독 또는 가벼운 아우터로 레이어드하기 좋은 클래식 스트라이프 셔츠"
         }
     ]
 
