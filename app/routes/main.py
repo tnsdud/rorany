@@ -58,9 +58,21 @@ def index():
             "image": "https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?w=800&auto=format&fit=crop&q=80",
             "description": "로즈골드와 화이트골드 링이 교차되며 드롭되는 우아한 듀얼 링 목걸이"
         },
-        # --- 악세사리 (귀걸이, 반지) ---
+        # --- 시계 / 워치 (BEST 클래식 스퀘어 메쉬 시계) ---
         {
             "id": 5,
+            "name": "KUMTTON 스퀘어 자개 다이얼 실버 메쉬 시계",
+            "category": "WATCH",
+            "badge": "BEST",
+            "price": "89,000",
+            "original_price": "128,000",
+            "sub_desc": "로마자 자개 다이얼 & 메탈 메쉬 스트랩 / 베스트 1위",
+            "image": "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=800&auto=format&fit=crop&q=80",
+            "description": "우아한 스퀘어 실버 프레임과 은은한 빛의 자개 다이얼이 돋보이는 쿼츠 손목시계"
+        },
+        # --- 악세사리 (귀걸이, 반지) ---
+        {
+            "id": 6,
             "name": "14K 골드 도금 볼드 드롭 귀걸이",
             "category": "ACC",
             "badge": "NEW",
@@ -71,7 +83,7 @@ def index():
             "description": "은은한 골드 광택과 감각적인 곡선이 돋보이는 모던 드롭 이어링"
         },
         {
-            "id": 6,
+            "id": 7,
             "name": "빈티지 실버 925 와이드 링 (반지)",
             "category": "ACC",
             "badge": "NEW",
@@ -83,7 +95,7 @@ def index():
         },
         # --- 잡화 / 패션 (신발, 가방, 아우터) ---
         {
-            "id": 7,
+            "id": 8,
             "name": "클래식 레더 더비 슈즈",
             "category": "SHOES",
             "badge": "MD추천",
@@ -94,7 +106,7 @@ def index():
             "description": "미니멀한 실루엣과 편안한 쿠셔닝을 갖춘 데일리 천연 소가죽 슈즈"
         },
         {
-            "id": 8,
+            "id": 9,
             "name": "레트로 미니멀 크로스백",
             "category": "BAG",
             "badge": "MD추천",
@@ -105,7 +117,7 @@ def index():
             "description": "탄탄한 가죽 소재와 실용적인 수납력을 자랑하는 미니멀 크로스백"
         },
         {
-            "id": 9,
+            "id": 10,
             "name": "오버핏 미니멀 블레이저",
             "category": "OUTER",
             "badge": "BEST",
