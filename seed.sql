@@ -55,6 +55,51 @@ VALUES
         45900,
         NULL,
         true
+    ),
+    (
+        (SELECT id FROM public.categories WHERE slug = 'shoes'),
+        '클래식 레더 더비 슈즈',
+        'classic-leather-derby-shoes',
+        '미니멀한 실루엣과 편안한 쿠셔닝을 갖춘 데일리 천연 소가죽 슈즈입니다.',
+        145000,
+        NULL,
+        true
+    ),
+    (
+        (SELECT id FROM public.categories WHERE slug = 'bag'),
+        '레트로 미니멀 크로스백',
+        'retro-minimal-crossbag',
+        '탄탄한 가죽 소재와 실용적인 수납력을 자랑하는 미니멀 크로스백입니다.',
+        89000,
+        NULL,
+        true
+    ),
+    (
+        (SELECT id FROM public.categories WHERE slug = 'acc'),
+        '14K 골드 도금 볼드 드롭 귀걸이',
+        '14k-bold-drop-earrings',
+        '은은한 골드 광택과 감각적인 곡선이 돋보이는 모던 드롭 이어링입니다.',
+        32000,
+        NULL,
+        true
+    ),
+    (
+        (SELECT id FROM public.categories WHERE slug = 'acc'),
+        '레이어드 실버 체인 목걸이',
+        'layered-silver-chain-necklace',
+        '모던한 두 줄 레이어드로 다양한 스타일에 포인트가 되는 실버 네크리스입니다.',
+        38000,
+        NULL,
+        true
+    ),
+    (
+        (SELECT id FROM public.categories WHERE slug = 'acc'),
+        '빈티지 실버 925 와이드 링',
+        'vintage-silver-925-wide-ring',
+        '볼드하면서도 감성적인 텍스처를 살린 핸드메이드 실버 925 반지입니다.',
+        29000,
+        NULL,
+        true
     )
 ON CONFLICT (slug) DO UPDATE 
 SET 
@@ -115,6 +160,36 @@ VALUES
     (
         (SELECT id FROM public.products WHERE slug = 'floral-midi-dress'),
         'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80',
+        true,
+        1
+    ),
+    (
+        (SELECT id FROM public.products WHERE slug = 'classic-leather-derby-shoes'),
+        'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&auto=format&fit=crop&q=80',
+        true,
+        1
+    ),
+    (
+        (SELECT id FROM public.products WHERE slug = 'retro-minimal-crossbag'),
+        'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&auto=format&fit=crop&q=80',
+        true,
+        1
+    ),
+    (
+        (SELECT id FROM public.products WHERE slug = '14k-bold-drop-earrings'),
+        'https://images.unsplash.com/photo-1630019852942-f89202989a59?w=800&auto=format&fit=crop&q=80',
+        true,
+        1
+    ),
+    (
+        (SELECT id FROM public.products WHERE slug = 'layered-silver-chain-necklace'),
+        'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80',
+        true,
+        1
+    ),
+    (
+        (SELECT id FROM public.products WHERE slug = 'vintage-silver-925-wide-ring'),
+        'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&auto=format&fit=crop&q=80',
         true,
         1
     );

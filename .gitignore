@@ -16,3 +16,9 @@ ENV/
 *.log
 instance/
 .pytest_cache/
+ .env
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+.log
