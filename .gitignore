@@ -1,0 +1,18 @@
+# Python 캐시 및 가상환경
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# 환경 변수 설정 파일 (민감한 정보 포함 방지)
+.env
+
+# 배포 및 로그 파일
+*.log
+instance/
+.pytest_cache/
