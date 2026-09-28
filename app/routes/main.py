@@ -204,6 +204,83 @@ def index():
             "sub_desc": "내추럴 링클 프리 코튼 / 모던 캐주얼",
             "image": "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=800&auto=format&fit=crop&q=80",
             "description": "단독 또는 가벼운 아우터로 레이어드하기 좋은 클래식 스트라이프 셔츠"
+        },
+        {
+            "id": 18,
+            "name": "코튼 린넨 맥시 셔츠 원피스",
+            "category": "DRESS",
+            "badge": "BEST",
+            "price": "56,000",
+            "original_price": "68,000",
+            "sub_desc": "시원한 린넨 혼방 / 허리 스트링 조절",
+            "image": "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800&auto=format&fit=crop&q=80",
+            "description": "자연스러운 핏과 편안한 활동성을 갖춘 클래식 버튼업 맥시 원피스"
+        },
+        {
+            "id": 19,
+            "name": "세미 슬림 컷팅 일자 데님 팬츠",
+            "category": "PANTS",
+            "badge": "NEW",
+            "price": "43,000",
+            "original_price": None,
+            "sub_desc": "밑단 내추럴 컷팅 / 탄탄 스판",
+            "image": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=800&auto=format&fit=crop&q=80",
+            "description": "어떤 슈즈와도 매칭하기 좋은 감각적인 워싱의 세미 일자 핏 청바지"
+        },
+        {
+            "id": 20,
+            "name": "카고 스트링 조거 팬츠",
+            "category": "PANTS",
+            "badge": "BEST",
+            "price": "39,000",
+            "original_price": "48,000",
+            "sub_desc": "트렌디 스트릿 무드 / 편안한 밴딩",
+            "image": "https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=800&auto=format&fit=crop&q=80",
+            "description": "밑단 조절 가능한 스트링과 포켓 디테일이 돋보이는 데일리 카고 조거팬츠"
+        },
+        {
+            "id": 21,
+            "name": "프리미엄 수피마 코튼 무지 티셔츠",
+            "category": "TOP",
+            "badge": "기획특가",
+            "price": "19,900",
+            "original_price": "28,000",
+            "sub_desc": "부드러운 촉감 & 탁월한 내구성 1+1",
+            "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80",
+            "description": "최상급 수피마 코튼 소재로 제작되어 세탁 후에도 변형 없는 데일리 무지 티"
+        },
+        {
+            "id": 22,
+            "name": "오버핏 그래픽 아트웍 반팔 티셔츠",
+            "category": "TOP",
+            "badge": "NEW",
+            "price": "31,000",
+            "original_price": None,
+            "sub_desc": "감각적인 백프린팅 & 드롭숄더 핏",
+            "image": "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800&auto=format&fit=crop&q=80",
+            "description": "후면의 감각적인 빈티지 그래픽이 시선을 사로잡는 오버핏 스트릿 티셔츠"
+        },
+        {
+            "id": 23,
+            "name": "소프트 케이블 브이넥 니트 베스트",
+            "category": "TOP",
+            "badge": "MD추천",
+            "price": "34,000",
+            "original_price": "42,000",
+            "sub_desc": "레이어드 찰떡 아이템 / 폭신한 착용감",
+            "image": "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=800&auto=format&fit=crop&q=80",
+            "description": "셔츠나 티셔츠 위에 가볍게 덧입어 센스있는 룩을 완성하는 꽈배기 니트 조끼"
+        },
+        {
+            "id": 24,
+            "name": "모던 클래식 롱 트렌치 코트",
+            "category": "OUTER",
+            "badge": "BEST",
+            "price": "148,000",
+            "original_price": "185,000",
+            "sub_desc": "생활 방수 원단 / 고급스러운 더블 버튼",
+            "image": "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&auto=format&fit=crop&q=80",
+            "description": "클래식한 디테일과 세련된 실루엣으로 봄/가을 시즌을 완성하는 프리미엄 트렌치코트"
         }
     ]
 
