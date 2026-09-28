@@ -50,24 +50,31 @@
     <div class="container py-4">
         <!-- 섹션 타이틀 -->
         <div class="text-center mb-5">
-            <h6 class="text-danger fw-bold text-uppercase tracking-wider mb-2">WEEKLY BEST</h6>
-            <h2 class="fw-bold">인기 베스트 상품</h2>
-            <p class="text-muted">의류부터 신발, 가방, 액세서리(귀걸이·목걸이·반지)까지 다양한 아이템을 만나보세요.</p>
+            <h6 class="text-danger fw-bold text-uppercase tracking-wider mb-2">WEEKLY BEST & JEWELRY</h6>
+            <h2 class="fw-bold">인기 베스트 컬렉션</h2>
+            <p class="text-muted">프로포즈 다이아 목걸이부터 귀걸이, 반지, 신발, 가방까지 지금 가장 사랑받는 상품들입니다.</p>
             <div class="mx-auto bg-danger" style="width: 50px; height: 3px; border-radius: 2px;"></div>
         </div>
 
         <!-- 상품 카드 그리드 (반응형 3~4열 배치) -->
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-3 row-cols-xl-4 g-4">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
             {% for product in products %}
             <div class="col">
-                <div class="card h-100 product-card shadow-sm border-0 rounded-4 overflow-hidden">
+                <div class="card h-100 product-card shadow-sm border-0 rounded-4 overflow-hidden position-relative">
+                    <!-- BEST 리본 배지 -->
+                    {% if product.badge == 'BEST' %}
+                    <div class="position-absolute top-0 start-0 z-3 bg-danger text-white px-2 py-1 small fw-bold" style="border-bottom-right-radius: 8px;">
+                        BEST
+                    </div>
+                    {% elif product.badge %}
+                    <div class="position-absolute top-0 start-0 z-3 bg-dark text-white px-2 py-1 small fw-semibold" style="border-bottom-right-radius: 8px;">
+                        {{ product.badge }}
+                    </div>
+                    {% endif %}
+
                     <!-- 상품 이미지 영역 -->
-                    <div class="position-relative overflow-hidden product-img-box">
-                        <img src="{{ product.image }}" class="card-img-top product-img" alt="{{ product.name }}">
-                        <!-- 카테고리 배지 -->
-                        <span class="position-absolute top-0 start-0 m-3 badge bg-dark bg-opacity-75 rounded-pill px-3 py-2">
-                            {{ product.category }}
-                        </span>
+                    <div class="position-relative overflow-hidden product-img-box bg-light text-center">
+                        <img src="{{ product.image }}" class="card-img-top product-img" alt="{{ product.name }}" style="object-fit: cover; height: 260px;">
                         <!-- 찜하기 버튼 -->
                         <button class="btn btn-light btn-sm position-absolute top-0 end-0 m-3 rounded-circle shadow-sm" title="위시리스트 추가">
                             <i class="bi bi-heart text-danger"></i>
@@ -75,24 +82,35 @@
                     </div>
 
                     <!-- 상품 정보 영역 -->
-                    <div class="card-body d-flex flex-column p-4">
-                        <h5 class="card-title fw-bold text-dark fs-6 mb-2 text-truncate" title="{{ product.name }}">
+                    <div class="card-body d-flex flex-column p-3 text-center">
+                        <span class="badge bg-secondary-subtle text-secondary align-self-center mb-2 px-2 py-1 small">
+                            {{ product.category }}
+                        </span>
+                        <h5 class="card-title fw-bold text-dark fs-6 mb-2 lh-base" title="{{ product.name }}" style="min-height: 40px;">
                             {{ product.name }}
                         </h5>
-                        <p class="card-text text-muted small flex-grow-1 mb-3">
-                            {{ product.description }}
-                        </p>
                         
-                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                            <div>
-                                <span class="text-muted small">판매가</span>
-                                <div class="fs-5 fw-bold text-danger">
-                                    {{ product.price }}<span class="fs-6 fw-normal text-dark">원</span>
-                                </div>
+                        {% if product.sub_desc %}
+                        <p class="text-muted small mb-2" style="font-size: 0.8rem;">
+                            {{ product.sub_desc }}
+                        </p>
+                        {% endif %}
+
+                        <!-- 가격 정보 -->
+                        <div class="mt-auto pt-2 border-top">
+                            {% if product.original_price %}
+                            <div class="text-muted text-decoration-line-through small">
+                                {{ product.original_price }}원
                             </div>
-                            <button class="btn btn-outline-dark btn-sm rounded-pill px-3 py-2 fw-semibold">
-                                <i class="bi bi-cart-plus me-1"></i>담기
-                            </button>
+                            {% endif %}
+                            <div class="fs-5 fw-bold text-danger mb-2">
+                                {{ product.price }}<span class="fs-6 fw-normal text-dark">원</span>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-dark btn-sm rounded-pill py-2 fw-semibold">
+                                    <i class="bi bi-cart-plus me-1"></i>담기
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
