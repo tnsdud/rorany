@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}교환 및 환불 정책 | VIBE-FASHION{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- 헤더 -->
+    <div class="text-center mb-5">
+        <span class="badge rounded-pill px-3 py-2 text-white mb-2" style="background: linear-gradient(135deg, #7c3aed, #9333ea);">
+            RETURN & REFUND POLICY
+        </span>
+        <h2 class="fw-bold mt-2">교환 및 환불 정책</h2>
+        <p class="text-muted">VIBE-FASHION은 고객님의 신뢰와 만족을 최우선으로 생각합니다. 교환/환불 규정을 안내해 드립니다.</p>
+        <div class="mx-auto" style="width: 50px; height: 3px; background: #7c3aed; border-radius: 2px;"></div>
+    </div>
+
+    <!-- 메인 카드 -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- 1. 한눈에 보는 핵심 요약 -->
+            <div class="row g-4 mb-5">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-white">
+                        <div class="rounded-circle d-inline-flex p-3 mx-auto mb-3" style="background-color: #f3e8ff; color: #7c3aed;">
+                            <i class="bi bi-calendar-check fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold">수령 후 7일 이내</h5>
+                        <p class="small text-muted mb-0">전자상거래법에 의거, 상품 수령일로부터 7일 이내 교환/반품 접수가 가능합니다.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-white">
+                        <div class="rounded-circle d-inline-flex p-3 mx-auto mb-3" style="background-color: #f3e8ff; color: #7c3aed;">
+                            <i class="bi bi-box-seam fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold">미사용 상품 유지</h5>
+                        <p class="small text-muted mb-0">태그(Tag) 제거, 착용 흔적, 세탁, 오염이 없는 원래 상태의 상품이어야 합니다.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center bg-white">
+                        <div class="rounded-circle d-inline-flex p-3 mx-auto mb-3" style="background-color: #f3e8ff; color: #7c3aed;">
+                            <i class="bi bi-arrow-repeat fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold">빠른 환불 처리</h5>
+                        <p class="small text-muted mb-0">반품 상품이 물류센터 입고 검수 완료된 후 영업일 기준 1~3일 이내 결제 취소됩니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 세부 상세 규정 -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-4">
+                <h4 class="fw-bold text-dark mb-4 pb-2 border-bottom d-flex align-items-center">
+                    <i class="bi bi-shield-check text-purple me-2" style="color: #7c3aed;"></i>세부 정책 및 배송비 안내
+                </h4>
+
+                <!-- 항목 1 -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark"><i class="bi bi-check-circle-fill text-purple me-2" style="color: #7c3aed;"></i>1. 교환 및 반품 신청 기간</h6>
+                    <ul class="text-secondary small ps-4 mb-0">
+                        <li>구매자 단순 변심: 상품 수령 후 <strong>7일 이내</strong> 신청 가능합니다.</li>
+                        <li>표시/광고 내용과 다르거나 상품 하자/불량: 상품 수령일로부터 <strong>3개월 이내</strong>, 그 사실을 안 날로부터 <strong>30일 이내</strong> 무상 교환 및 반품이 가능합니다.</li>
+                    </ul>
+                </div>
+
+                <!-- 항목 2 -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark"><i class="bi bi-check-circle-fill text-purple me-2" style="color: #7c3aed;"></i>2. 배송비 부담 기준</h6>
+                    <div class="table-responsive mt-2">
+                        <table class="table table-bordered small align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>구분</th>
+                                    <th>비용</th>
+                                    <th>비고</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-semibold">단순 변심 반품</td>
+                                    <td>왕복 6,000원</td>
+                                    <td>초기 무료배송인 경우 왕복 배송비가 차감됩니다.</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">단순 변심 교환</td>
+                                    <td>왕복 6,000원</td>
+                                    <td>사이즈 및 색상 교환 시 동일 제품에 한합니다.</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-semibold">상품 하자 / 오배송</td>
+                                    <td><strong>무료 (0원)</strong></td>
+                                    <td>VIBE-FASHION이 전액 부담합니다.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 항목 3 -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>3. 교환/환불이 불가한 경우</h6>
+                    <ul class="text-secondary small ps-4 mb-0">
+                        <li>소비자의 책임 있는 사유로 상품 등이 멸실 또는 훼손된 경우</li>
+                        <li>소비자의 사용, 착용, 세탁, 향수 및 화장품 등의 냄새나 오염 흔적으로 가치가 현저히 감소한 경우</li>
+                        <li>상품의 고유 텍(Tag), 라벨, 박스, 보증서 등이 훼손되거나 분실된 경우</li>
+                        <li>시간의 경과에 의하여 재판매가 곤란할 정도로 상품의 가치가 현저히 감소한 경우</li>
+                        <li>1:1 주문제작 상품 또는 각인 서비스가 진행된 주얼리/악세사리 제품인 경우</li>
+                    </ul>
+                </div>
+
+                <!-- 항목 4 -->
+                <div>
+                    <h6 class="fw-bold text-dark"><i class="bi bi-clock-history text-purple me-2" style="color: #7c3aed;"></i>4. 환불 소요 시간 안내</h6>
+                    <ul class="text-secondary small ps-4 mb-0">
+                        <li>신용카드/체크카드: 카드사 승인 취소 완료까지 영업일 기준 3~5일 소요됩니다.</li>
+                        <li>무통장 입금 / 계좌이체: 환불 계좌 확인 후 당일 또는 익영업일 내 환불 입금 처리됩니다.</li>
+                        <li>간편결제 (카카오페이, 네이버페이 등): 결제 수단 정책에 따라 1~3영업일 소요됩니다.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 하단 문의 바로가기 배너 -->
+            <div class="card border-0 rounded-4 p-4 text-center text-white" style="background: linear-gradient(135deg, #4c1d95 0%, #6b21a8 100%);">
+                <h5 class="fw-bold mb-2">교환/환불에 대해 더 궁금하신 점이 있으신가요?</h5>
+                <p class="small text-light opacity-90 mb-3">고객센터(1588-0000) 또는 1:1 온라인 문의를 이용하시면 신속히 안내해 드리겠습니다.</p>
+                <div>
+                    <a href="{{ url_for('main.contact') }}" class="btn btn-light px-4 py-2 rounded-pill fw-bold" style="color: #6b21a8;">
+                        <i class="bi bi-pencil-square me-2"></i>1:1 문의 접수하기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, flash, redirect, url_for
 
 # 'main'이라는 이름의 블루프린트 생성
 # URL 프리픽스 없이 루트('/') 경로 등 메인 화면을 담당합니다.
@@ -286,3 +286,28 @@ def index():
 
     # HTML 템플릿으로 상품 목록 데이터 전달
     return render_template('index.html', products=products)
+
+
+@main_bp.route('/contact', methods=['GET', 'POST'])
+def contact():
+    """
+    1:1 문의사항 및 고객센터 페이지 핸들러:
+    GET 요청 시 문의 작성 폼과 FAQ를 보여주고,
+    POST 요청 시 문의 접수 완료 메시지를 표시합니다.
+    """
+    if request.method == 'POST':
+        name = request.form.get('name')
+        category = request.form.get('category')
+        flash(f"{name} 님의 [{category}] 문의가 성공적으로 접수되었습니다. 확인 후 신속히 답변드리겠습니다.", "success")
+        return redirect(url_for('main.contact'))
+
+    return render_template('contact.html')
+
+
+@main_bp.route('/refund-policy')
+def refund_policy():
+    """
+    교환 및 환불정책 안내 페이지 핸들러:
+    소비자보호법 기준 교환/반품 가능 기간, 배송비 기준, 불가 사유 등을 안내합니다.
+    """
+    return render_template('refund_policy.html')
