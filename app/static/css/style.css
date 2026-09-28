@@ -13,10 +13,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&display=swap');
 
 :root {
-    /* 고급스럽고 세련된 모던 럭셔리 & 웜 샴페인/베이지 팔레트 */
+    /* 세련되고 감각적인 퍼플 & 모던 럭셔리 팔레트 */
+    --brand-purple: #6f42c1;       /* 메인 바이올렛/퍼플 */
+    --brand-purple-dark: #52279b;  /* 딥 로열 퍼플 */
+    --brand-purple-light: #8e68d8; /* 소프트 라벤더 퍼플 */
+    --brand-purple-glow: rgba(111, 66, 193, 0.25);
     --brand-navy: #1f242e;        /* 세련된 슬레이트 차콜 */
-    --brand-coral: #b8860b;       /* 기품 있는 샴페인 골드 액센트 */
-    --brand-coral-hover: #996f07; /* 깊이감 있는 골드 호버 */
+    --brand-coral: #6f42c1;       /* 브랜드 액센트 컬러를 퍼플로 통일 */
+    --brand-coral-hover: #52279b; /* 호버 시 딥 퍼플 */
     --brand-dark: #2d3139;        
     --brand-black: #1a1d24;       
     --brand-accent: #2b2f38;
@@ -40,11 +44,33 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* 네비게이션 바: 은은하고 럭셔리한 소프트 글래스모피즘 & 세련된 다크 차콜 */
+/* 로고 브랜드명: 매혹적인 보라색 그라디언트 텍스트 효과 */
+.navbar-brand {
+    background: linear-gradient(135deg, #d8b4fe 0%, #a855f7 50%, #c084fc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800 !important;
+    text-shadow: 0 2px 10px rgba(168, 85, 247, 0.3);
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    filter: brightness(1.2);
+    transform: scale(1.02);
+}
+
+/* 로고 좌측 아이콘 보라색 포인트 */
+.navbar-brand i {
+    -webkit-text-fill-color: #a855f7 !important;
+    color: #a855f7 !important;
+}
+
+/* 네비게이션 바: 깊이감 있는 딥 퍼플 차콜 & 소프트 글래스모피즘 */
 .navbar.bg-dark {
-    background: rgba(28, 32, 40, 0.95) !important;
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(90deg, rgba(23, 16, 38, 0.96) 0%, rgba(32, 21, 53, 0.96) 100%) !important;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(168, 85, 247, 0.25) !important;
+    box-shadow: 0 4px 20px rgba(23, 16, 38, 0.4) !important;
 }
 
 .tracking-wide {
@@ -56,18 +82,18 @@ body {
 }
 
 /* --------------------------------------------------
-   2. 히어로 섹션 (화사하고 깊이감 있는 럭셔리 실크 베이지 & 소프트 골드 톤)
+   2. 히어로 섹션 (화사하고 감각적인 라벤더 퍼플 & 소프트 그라디언트 톤)
    -------------------------------------------------- */
 .hero-section {
-    /* 어두운 검정 대신 고급 명품 룩북 분위기의 우아한 베이지/샴페인 소프트 그라디언트 */
-    background: linear-gradient(135deg, #f4efe9 0%, #ece5dc 50%, #e5ddd2 100%) !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    /* 감각적이고 트렌디한 라벤더 / 소프트 바이올렛 그라디언트 */
+    background: linear-gradient(135deg, #f5f0fb 0%, #ebe2f7 50%, #dfd3f2 100%) !important;
+    border-bottom: 1px solid rgba(111, 66, 193, 0.12);
     position: relative;
     padding-top: 5rem !important;
     padding-bottom: 5.5rem !important;
 }
 
-/* 은은한 샴페인 골드빛 앰비언트 글로우 효과 */
+/* 은은한 바이올렛 앰비언트 글로우 효과 */
 .hero-section::before {
     content: "";
     position: absolute;
@@ -76,7 +102,7 @@ body {
     transform: translate(-50%, -50%);
     width: 750px;
     height: 380px;
-    background: radial-gradient(circle, rgba(212, 175, 55, 0.18) 0%, rgba(244, 239, 233, 0) 70%);
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.2) 0%, rgba(245, 240, 251, 0) 70%);
     pointer-events: none;
 }
 
@@ -224,20 +250,20 @@ body {
     letter-spacing: 1px;
 }
 
-/* 할인 배지(고급스러운 딥 골드/샴페인 태그) */
+/* 할인 배지(고급스러운 딥 퍼플/바이올렛 태그) */
 .product-img-box::before {
     content: "20% OFF";
     position: absolute;
     bottom: 12px;
     left: 12px;
     z-index: 2;
-    background: linear-gradient(135deg, #c59b27, #9b7212);
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
     color: #ffffff;
     font-size: 0.72rem;
     font-weight: 700;
     padding: 0.3rem 0.7rem;
     border-radius: 50rem;
-    box-shadow: 0 4px 10px rgba(184, 134, 11, 0.3);
+    box-shadow: 0 4px 10px rgba(124, 58, 237, 0.35);
     letter-spacing: 0.5px;
 }
 
@@ -255,7 +281,7 @@ body {
 }
 
 .product-img-box .btn-light .text-danger {
-    color: #b8860b !important;
+    color: #7c3aed !important;
 }
 
 /* 상품 제목 스타일 */
@@ -265,9 +291,9 @@ body {
     font-size: 1.02rem !important;
 }
 
-/* 가격 텍스트 굵기 증가 및 세련된 다크/골드 포인트 색상 */
+/* 가격 텍스트 굵기 증가 및 세련된 다크/퍼플 포인트 색상 */
 .product-card .fs-5.fw-bold.text-danger {
-    color: #1e2229 !important;
+    color: #6d28d9 !important;
     font-weight: 800 !important;
     font-size: 1.3rem !important;
     letter-spacing: -0.5px;
@@ -275,35 +301,37 @@ body {
 
 /* 담기 버튼 */
 .product-card .btn-outline-dark {
-    border-color: #1e2229 !important;
-    color: #1e2229 !important;
+    border-color: #7c3aed !important;
+    color: #6d28d9 !important;
     transition: all 0.25s ease;
 }
 
 .product-card .btn-outline-dark:hover {
-    background-color: #1e2229 !important;
-    border-color: #1e2229 !important;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
+    border-color: #7c3aed !important;
     color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
 
-/* 상단 장바구니 배지 골드/블랙 색상 */
+/* 상단 장바구니 배지 퍼플 색상 */
 .badge.bg-danger {
-    background-color: #b8860b !important;
+    background: linear-gradient(135deg, #9333ea, #7c3aed) !important;
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.4);
 }
 
-/* 텍스트 골드 포인트 */
+/* 텍스트 퍼플 포인트 */
 .text-danger {
-    color: #b8860b !important;
+    color: #7c3aed !important;
 }
 
 /* 섹션 타이틀 포인트 */
 #products .text-danger {
-    color: #b8860b !important;
+    color: #7c3aed !important;
     letter-spacing: 2px;
 }
 
 #products .bg-danger {
-    background-color: #b8860b !important;
+    background: linear-gradient(90deg, #7c3aed, #c084fc) !important;
 }
 
 /* --------------------------------------------------
