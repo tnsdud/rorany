@@ -274,6 +274,51 @@ PRODUCTS = [
         "sub_desc": "생활 방수 원단 / 고급스러운 더블 버튼",
         "image": "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&auto=format&fit=crop&q=80",
         "description": "클래식한 디테일과 세련된 실루엣으로 봄/가을 시즌을 완성하는 프리미엄 트렌치코트"
+    },
+    # --- 로맨틱 & 샤랄라 부티크 컬렉션 (LOVELY & ELEGANT) ---
+    {
+        "id": 25,
+        "name": "페어리 쉬폰 플라워 캉캉 롱 원피스",
+        "category": "DRESS",
+        "badge": "HOT",
+        "price": "92,000",
+        "original_price": "115,000",
+        "sub_desc": "살랑살랑 봄바람 실루엣 / 하객룩 & 데이트룩 베스트",
+        "image": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&auto=format&fit=crop&q=80",
+        "description": "은은한 플로럴 나염과 층층이 퍼지는 티어드 캉캉 주름이 움직일 때마다 로맨틱한 샤랄라 무드를 완성합니다."
+    },
+    {
+        "id": 26,
+        "name": "오간자 시스루 리본 타이 퍼프 블라우스",
+        "category": "TOP",
+        "badge": "NEW",
+        "price": "68,000",
+        "original_price": "85,000",
+        "sub_desc": "은은한 광택 오간자 / 풍성한 볼륨 퍼프소매",
+        "image": "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?w=800&auto=format&fit=crop&q=80",
+        "description": "빛을 받을 때마다 영롱하게 반짝이는 오간자 시스루 원단과 로맨틱한 리본 타이로 여신 분위기를 연출합니다."
+    },
+    {
+        "id": 27,
+        "name": "발레리나 튤 메쉬 롱 플레어 스커트",
+        "category": "PANTS",
+        "badge": "MD추천",
+        "price": "59,000",
+        "original_price": None,
+        "sub_desc": "3중 샤스커트 튤 레이어드 / 밴딩 허리",
+        "image": "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=800&auto=format&fit=crop&q=80",
+        "description": "풍성한 3겹 메쉬 튤 소재로 걸을 때마다 구름 위를 걷는 듯 가볍고 우아하게 흩날리는 샤랄라 발레코어 스커트입니다."
+    },
+    {
+        "id": 28,
+        "name": "파스텔 프릴 레이스 드레이핑 미니 원피스",
+        "category": "DRESS",
+        "badge": "NEW",
+        "price": "86,000",
+        "original_price": "108,000",
+        "sub_desc": "화사한 파스텔 핑크 / 입체 프릴 디테일",
+        "image": "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&auto=format&fit=crop&q=80",
+        "description": "섬세한 물결 프릴과 입체적인 레이스 드레이핑이 어우러져 청순하면서도 화사한 아우라를 선사하는 미니 드레스입니다."
     }
 ]
 
