@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from app.routes.auth import login_required
 
 # 'main'이라는 이름의 블루프린트 생성
 # URL 프리픽스 없이 루트('/') 경로 등 메인 화면을 담당합니다.
@@ -378,14 +379,10 @@ def logout():
 
 
 @main_bp.route('/mypage')
+@login_required
 def mypage():
     """마이페이지"""
-    from app.routes.auth import login_required
-
     user = session.get('user')
-    if not user or not session.get('user_id'):
-        return redirect(url_for('auth.login', error='login_required'))
-
     return render_template('mypage.html', user=user, cart_count=get_cart_count())
 
 
@@ -400,10 +397,6 @@ def delete_account():
     session.pop('user', None)
     session.pop('access_token', None)
     session.pop('refresh_token', None)
-    session.pop('cart', None)
-
-    flash(f"{name} 님의 회원 탈퇴가 안전하게 처리되었습니다. 그동안 VIBE-FASHION을 이용해주셔서 감사드립니다.", "info")
-    return redirect(url_for('main.index'))
     session.pop('cart', None)
 
     flash(f"{name} 님의 회원 탈퇴가 안전하게 처리되었습니다. 그동안 VIBE-FASHION을 이용해주셔서 감사드립니다.", "info")

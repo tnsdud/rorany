@@ -361,10 +361,6 @@ body {
     border-color: #ffffff !important;
     color: #1e2229 !important;
 }
-    background-color: #ffffff !important;
-    border-color: #1e2229 !important;
-    color: #1e2229 !important;
-}
 
 /* 히어로 섹션 내 우측 장식 이미지 숨김(슬로건 중앙 집중 레이아웃) */
 .hero-section .col-lg-5 {
