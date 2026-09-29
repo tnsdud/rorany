@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}가입 안내 | VIBE-FASHION{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white text-center">
+                <div class="rounded-circle d-inline-flex p-3 mb-3 mx-auto" style="background-color: #ecfdf5; color: #10b981;">
+                    <i class="bi bi-envelope-check-fill fs-1"></i>
+                </div>
+                <h3 class="fw-bold mb-2">인증 메일을 보냈습니다</h3>
+                <p class="text-secondary mb-4">
+                    {% if email %}
+                    <strong>{{ email }}</strong> 으로 인증 확인 메일이 발송되었습니다.<br>
+                    {% endif %}
+                    메일함에 도착한 링크를 클릭하시면 회원가입 인증이 완료되고 서비스로 이동합니다.
+                </p>
+
+                <div class="alert alert-info border-0 rounded-3 text-start small mb-4" style="background-color: #f3e8ff; color: #6b21a8;">
+                    <div class="fw-bold mb-1"><i class="bi bi-info-circle-fill me-1"></i>메일이 오지 않았나요?</div>
+                    <ul class="mb-0 ps-3">
+                        <li>스팸 메일함 또는 정크 메일함을 확인해주세요.</li>
+                        <li>네트워크 상황에 따라 메일 수신까지 수 분이 걸릴 수 있습니다.</li>
+                    </ul>
+                </div>
+
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="{{ url_for('auth.login') }}" class="btn text-white px-4 py-2 fw-semibold rounded-pill" style="background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);">
+                        로그인 화면으로 이동
+                    </a>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary px-4 py-2 fw-semibold rounded-pill">
+                        홈으로 가기
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -149,9 +149,9 @@ body {
     position: relative;
 }
 
-/* 요청된 슬로건: "당신의 일상을 스타일리시하게" 중앙 배치 */
+/* 감성·럭셔리 메인 슬로건: 순수하고 세련된 우아함 */
 .hero-section h1::after {
-    content: "당신의 일상을 스타일리시하게";
+    content: "티 없이 맑은 하루, 가장 온전한 당신의 실루엣";
     visibility: visible;
     display: block;
     font-family: var(--font-serif);

@@ -316,71 +316,30 @@ def signup_policy():
 
 @main_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    """회원가입 페이지"""
-    if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        policy_agree = request.form.get('policy_agree')
-
-        if not policy_agree:
-            flash("회원가입 정책 및 이용약관에 동의하셔야 가입이 가능합니다.", "danger")
-            return redirect(url_for('main.register'))
-
-        if not name or not email or not password:
-            flash("모든 필수 항목을 입력해주세요.", "danger")
-            return redirect(url_for('main.register'))
-
-        # 회원가입 완료 및 자동 로그인 처리
-        user = {
-            'name': name,
-            'email': email
-        }
-        session['user'] = user
-        flash(f"{name} 님, VIBE-FASHION 회원가입이 완료되었습니다! 웰컴 10% 쿠폰이 지급되었습니다.", "success")
-        return redirect(url_for('main.index'))
-
-    return render_template('register.html')
+    """회원가입 페이지 (auth 블루프린트로 리다이렉트)"""
+    return redirect(url_for('auth.signup'))
 
 
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """로그인 페이지"""
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-
-        if not email or not password:
-            flash("이메일과 비밀번호를 모두 입력해주세요.", "danger")
-            return redirect(url_for('main.login'))
-
-        # 로그인 성공 처리
-        name = email.split('@')[0].capitalize()
-        session['user'] = {
-            'name': name,
-            'email': email
-        }
-        flash(f"{name} 님, 로그인되었습니다.", "success")
-        return redirect(url_for('main.index'))
-
-    return render_template('login.html')
+    """로그인 페이지 (auth 블루프린트로 리다이렉트)"""
+    return redirect(url_for('auth.login'))
 
 
 @main_bp.route('/logout')
 def logout():
-    """로그아웃 처리"""
-    session.pop('user', None)
-    flash("정상적으로 로그아웃되었습니다.", "info")
-    return redirect(url_for('main.index'))
+    """로그아웃 처리 (auth 블루프린트로 리다이렉트)"""
+    return redirect(url_for('auth.logout'))
 
 
 @main_bp.route('/mypage')
 def mypage():
     """마이페이지"""
+    from app.routes.auth import login_required
+
     user = session.get('user')
-    if not user:
-        flash("로그인이 필요한 서비스입니다.", "warning")
-        return redirect(url_for('main.login'))
+    if not user or not session.get('user_id'):
+        return redirect(url_for('auth.login', error='login_required'))
 
     return render_template('mypage.html', user=user, cart_count=get_cart_count())
 
@@ -392,7 +351,14 @@ def delete_account():
     name = user.get('name', '고객') if user else '고객'
 
     # 세션 데이터 완전 초기화 (로그인 정보, 장바구니 비우기)
+    session.pop('user_id', None)
     session.pop('user', None)
+    session.pop('access_token', None)
+    session.pop('refresh_token', None)
+    session.pop('cart', None)
+
+    flash(f"{name} 님의 회원 탈퇴가 안전하게 처리되었습니다. 그동안 VIBE-FASHION을 이용해주셔서 감사드립니다.", "info")
+    return redirect(url_for('main.index'))
     session.pop('cart', None)
 
     flash(f"{name} 님의 회원 탈퇴가 안전하게 처리되었습니다. 그동안 VIBE-FASHION을 이용해주셔서 감사드립니다.", "info")
