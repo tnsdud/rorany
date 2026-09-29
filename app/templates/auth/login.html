@@ -76,10 +76,23 @@
                             회원정책
                         </a>
                     </div>
-                    <button type="submit" class="btn text-white w-100 py-3 fw-bold rounded-pill shadow-sm" style="background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);">
+                    <button type="submit" class="btn text-white w-100 py-3 fw-bold rounded-pill shadow-sm mb-3" style="background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);">
                         로그인
                     </button>
                 </form>
+
+                <div class="position-relative text-center my-3">
+                    <hr class="text-muted">
+                    <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">또는</span>
+                </div>
+
+                <!-- 카카오 간편 로그인 버튼 -->
+                <a href="{{ url_for('auth.kakao') }}" class="btn w-100 py-3 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center text-dark" style="background-color: #FEE500; border: none; text-decoration: none;">
+                    <svg class="me-2" width="20" height="20" viewBox="0 0 24 24" fill="#191919">
+                        <path d="M12 3c-5.523 0-10 3.582-10 8 0 2.868 1.905 5.38 4.793 6.772l-1.22 4.492c-.108.398.344.717.68.48l5.334-3.766c.137.014.275.022.413.022 5.523 0 10-3.582 10-8s-4.477-8-10-8z"/>
+                    </svg>
+                    카카오로 간편 로그인
+                </a>
 
                 <hr class="my-4 text-muted">
 

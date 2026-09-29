@@ -345,6 +345,33 @@ def reset_password():
 
 
 # ==============================================================================
+# [7] GET /auth/kakao - 카카오 간편 로그인 요청
+# ==============================================================================
+@auth_bp.route('/kakao')
+def kakao():
+    """
+    [7] 카카오 간편 로그인 처리
+    Supabase OAuth 인증을 통해 카카오 로그인 동의 화면으로 리다이렉트합니다.
+    """
+    site_url = os.getenv("SITE_URL", "http://localhost:5000").rstrip('/')
+    redirect_to = f"{site_url}/auth/confirm"
+
+    try:
+        supabase = get_supabase_client()
+        res = supabase.auth.sign_in_with_oauth({
+            "provider": "kakao",
+            "options": {
+                "redirect_to": redirect_to
+            }
+        })
+        if res and res.url:
+            return redirect(res.url)
+        return redirect(url_for('auth.login', error='kakao_failed'))
+    except Exception:
+        return redirect(url_for('auth.login', error='kakao_failed'))
+
+
+# ==============================================================================
 # 로그아웃 라우트
 # ==============================================================================
 @auth_bp.route('/logout')
