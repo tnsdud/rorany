@@ -149,9 +149,9 @@ body {
     position: relative;
 }
 
-/* 감성·럭셔리 메인 슬로건: 순수하고 세련된 우아함 */
+/* 하이엔드 럭셔리 부티크 메인 슬로건 */
 .hero-section h1::after {
-    content: "티 없이 맑은 하루, 가장 온전한 당신의 실루엣";
+    content: "시대가 지나도 변치 않는 품격, 하이엔드 시그니처 룩";
     visibility: visible;
     display: block;
     font-family: var(--font-serif);
@@ -168,7 +168,7 @@ body {
     text-align: center !important;
     margin-left: auto;
     margin-right: auto;
-    max-width: 640px;
+    max-width: 680px;
     font-weight: 400;
 }
 
