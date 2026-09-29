@@ -33,69 +33,85 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{{ url_for('main.index') }}">홈</a>
+                        <a class="nav-link active" aria-current="page" href="{{ url_for('main.index') }}">
+                            <i class="bi bi-house-heart"></i>홈
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#products">신상품</a>
+                        <a class="nav-link" href="#products">
+                            <i class="bi bi-stars"></i>신상품
+                        </a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="clothingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            의류
+                            <i class="bi bi-gem"></i>의류
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="clothingDropdown">
-                            <li><a class="dropdown-item" href="#products">전체 의류</a></li>
+                            <li><a class="dropdown-item" href="#products"><i class="bi bi-grid me-2"></i>전체 의류</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#products">원피스 (DRESS)</a></li>
-                            <li><a class="dropdown-item" href="#products">바지 / 팬츠 (PANTS)</a></li>
-                            <li><a class="dropdown-item" href="#products">티셔츠 / 상의 (TOP)</a></li>
-                            <li><a class="dropdown-item" href="#products">아우터 (OUTER)</a></li>
+                            <li><a class="dropdown-item" href="#products"><i class="bi bi-heart me-2"></i>원피스 (DRESS)</a></li>
+                            <li><a class="dropdown-item" href="#products"><i class="bi bi-tag me-2"></i>바지 / 팬츠 (PANTS)</a></li>
+                            <li><a class="dropdown-item" href="#products"><i class="bi bi-suit-club me-2"></i>티셔츠 / 상의 (TOP)</a></li>
+                            <li><a class="dropdown-item" href="#products"><i class="bi bi-snow me-2"></i>아우터 (OUTER)</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#products">신발</a>
+                        <a class="nav-link" href="#products">
+                            <i class="bi bi-handbag"></i>신발
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#products">가방</a>
+                        <a class="nav-link" href="#products">
+                            <i class="bi bi-bag"></i>가방
+                        </a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="accDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            악세사리/시계
+                            <i class="bi bi-watch"></i>악세사리/시계
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="accDropdown">
-                            <li><a class="dropdown-item" href="#products">목걸이 (다이아)</a></li>
-                            <li><a class="dropdown-item" href="#products">시계 (WATCH)</a></li>
-                            <li><a class="dropdown-item" href="#products">귀걸이</a></li>
-                            <li><a class="dropdown-item" href="#products">반지</a></li>
+                            <li><a class="dropdown-item" href="#products"><i class="bi bi-diamond me-2"></i>목걸이 (다이아)</a></li>
+                            <li><a class="dropdown-item" href="#products"><i class="bi bi-clock me-2"></i>시계 (WATCH)</a></li>
+                            <li><a class="dropdown-item" href="#products"><i class="bi bi-record-circle me-2"></i>귀걸이</a></li>
+                            <li><a class="dropdown-item" href="#products"><i class="bi bi-circle me-2"></i>반지</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#!">기획전</a>
+                        <a class="nav-link nav-link-special" href="#!">
+                            <i class="bi bi-lightning-charge-fill"></i>기획전
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.contact') }}">문의하기</a>
+                        <a class="nav-link" href="{{ url_for('main.contact') }}">
+                            <i class="bi bi-chat-dots"></i>문의하기
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.refund_policy') }}">환불정책</a>
+                        <a class="nav-link" href="{{ url_for('main.refund_policy') }}">
+                            <i class="bi bi-arrow-repeat"></i>환불정책
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.signup_policy') }}">회원정책</a>
+                        <a class="nav-link" href="{{ url_for('main.signup_policy') }}">
+                            <i class="bi bi-shield-check"></i>회원정책
+                        </a>
                     </li>
                 </ul>
 
                 <!-- 우측 사용자 아이콘 및 장바구니 -->
-                <div class="d-flex align-items-center gap-3">
-                    <a href="{{ url_for('main.cart') }}" class="btn btn-outline-light btn-sm position-relative text-white" title="장바구니 보기">
-                        <i class="bi bi-cart3 fs-6"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ url_for('main.cart') }}" class="btn nav-cart-btn btn-sm position-relative text-white" title="장바구니 보기">
+                        <i class="bi bi-bag-heart fs-6"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light shadow-sm">
                             {{ cart_count }}
                         </span>
                     </a>
                     {% if current_user %}
                     <div class="dropdown">
-                        <button class="btn btn-light btn-sm fw-semibold dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="btn nav-user-btn btn-sm fw-semibold dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-person-fill me-1 text-purple"></i>{{ current_user.name }} 님
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow border-0 rounded-4">
                             <li><a class="dropdown-item small" href="{{ url_for('main.mypage') }}"><i class="bi bi-person-circle me-2"></i>마이페이지</a></li>
                             <li><a class="dropdown-item small" href="{{ url_for('main.cart') }}"><i class="bi bi-cart3 me-2"></i>장바구니 ({{ cart_count }})</a></li>
                             <li><a class="dropdown-item small" href="{{ url_for('main.signup_policy') }}"><i class="bi bi-shield-check me-2"></i>회원정책</a></li>
@@ -105,8 +121,8 @@
                         </ul>
                     </div>
                     {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-light btn-sm fw-semibold rounded-pill px-3">로그인</a>
-                    <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-light btn-sm fw-semibold rounded-pill px-3 d-none d-sm-inline-block">회원가입</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn nav-auth-login btn-sm fw-semibold rounded-pill px-3">로그인</a>
+                    <a href="{{ url_for('auth.signup') }}" class="btn nav-auth-signup btn-sm fw-semibold rounded-pill px-3 d-none d-sm-inline-block">회원가입</a>
                     {% endif %}
                 </div>
             </div>

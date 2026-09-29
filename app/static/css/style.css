@@ -65,22 +65,167 @@ body {
     -webkit-text-fill-color: #f3e8ff !important;
 }
 
-/* 네비게이션 바: 확실한 보라색(Purple) 바탕 */
+/* 네비게이션 바: 하이엔드 럭셔리 퍼플 & 글래스모피즘 */
 .navbar {
-    background: linear-gradient(135deg, #4c1d95 0%, #6b21a8 50%, #581c87 100%) !important;
-    border-bottom: 2px solid #a855f7 !important;
-    box-shadow: 0 4px 20px rgba(76, 29, 149, 0.4) !important;
+    background: linear-gradient(135deg, #3b0764 0%, #581c87 50%, #4c1d95 100%) !important;
+    border-bottom: 1px solid rgba(233, 213, 255, 0.2) !important;
+    box-shadow: 0 8px 32px rgba(46, 16, 101, 0.5) !important;
+    backdrop-filter: blur(16px);
 }
 
+/* 네비게이션 메뉴 목록: 독특한 글래스 캡슐(Glass Capsule) 버튼 리스트 */
+.navbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.navbar-nav .nav-item {
+    margin: 0.15rem 0;
+}
+
+/* 개별 메뉴: 딱딱한 회사 메뉴를 탈피한 럭셔리 부티크 글래스 버튼 */
 .navbar-nav .nav-link {
-    color: rgba(255, 255, 255, 0.88) !important;
-    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 0.86rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    padding: 0.38rem 0.85rem !important;
+    border-radius: 50rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    text-decoration: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-.navbar-nav .nav-link:hover,
+/* 호버 시: 네온 퍼플 & 골드 앰비언트 글로우 리프트 효과 */
+.navbar-nav .nav-link:hover {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, rgba(233, 213, 255, 0.25) 0%, rgba(192, 132, 252, 0.35) 100%);
+    border-color: rgba(243, 232, 255, 0.6);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 18px rgba(192, 132, 252, 0.45), inset 0 0 10px rgba(255, 255, 255, 0.25);
+}
+
+/* 활성화(Active) 상태: 빛나는 네온 라벤더 캡슐 */
 .navbar-nav .nav-link.active {
     color: #ffffff !important;
-    font-weight: 700;
+    background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+    border-color: #e9d5ff;
+    box-shadow: 0 0 16px rgba(192, 132, 252, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+/* 기획전 스페셜 버튼: 시선을 사로잡는 반짝이는 오로라 버튼 */
+.navbar-nav .nav-link-special {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(244, 63, 94, 0.3) 100%) !important;
+    border-color: rgba(251, 191, 36, 0.5) !important;
+    color: #fef08a !important;
+    animation: pulseGlow 2.5s infinite;
+}
+
+.navbar-nav .nav-link-special:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #e11d48 100%) !important;
+    color: #ffffff !important;
+    border-color: #fef08a !important;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5) !important;
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 16px rgba(244, 63, 94, 0.6);
+    }
+}
+
+/* 드롭다운 메뉴: 프라이빗 부티크 글래스 스타일 */
+.dropdown-menu-dark {
+    background: rgba(30, 10, 56, 0.95) !important;
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(233, 213, 255, 0.2) !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 12px 36px rgba(15, 5, 30, 0.6) !important;
+    padding: 0.6rem !important;
+}
+
+.dropdown-menu-dark .dropdown-item {
+    border-radius: 0.6rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.dropdown-menu-dark .dropdown-item:hover {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(126, 34, 206, 0.5) 100%) !important;
+    color: #ffffff !important;
+    transform: translateX(4px);
+}
+
+/* 네비게이션 우측 유니크 버튼군 (장바구니 / 로그인 / 회원가입) */
+.nav-cart-btn {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 50rem !important;
+    padding: 0.4rem 0.8rem !important;
+    backdrop-filter: blur(8px);
+    transition: all 0.25s ease;
+}
+
+.nav-cart-btn:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-color: #ffffff !important;
+    transform: scale(1.08);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.4);
+}
+
+.nav-auth-login {
+    background: #ffffff !important;
+    color: #4c1d95 !important;
+    border: none !important;
+    font-size: 0.85rem !important;
+    padding: 0.4rem 1.1rem !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.25s ease;
+}
+
+.nav-auth-login:hover {
+    background: #f3e8ff !important;
+    color: #2e1065 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(243, 232, 255, 0.5) !important;
+}
+
+.nav-auth-signup {
+    background: linear-gradient(135deg, rgba(233, 213, 255, 0.15) 0%, rgba(192, 132, 252, 0.2) 100%) !important;
+    border: 1px solid rgba(233, 213, 255, 0.45) !important;
+    color: #ffffff !important;
+    font-size: 0.85rem !important;
+    padding: 0.4rem 1.1rem !important;
+    backdrop-filter: blur(8px);
+    transition: all 0.25s ease;
+}
+
+.nav-auth-signup:hover {
+    background: #ffffff !important;
+    color: #581c87 !important;
+    border-color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(192, 132, 252, 0.5) !important;
+}
+
+.nav-user-btn {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(233, 213, 255, 0.6) !important;
+    color: #4c1d95 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
 }
 
 .tracking-wide {
