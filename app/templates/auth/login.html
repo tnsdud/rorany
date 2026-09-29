@@ -35,6 +35,8 @@
                         유효하지 않은 인증 링크입니다.
                     {% elif error_code == 'reset_session_expired' %}
                         비밀번호 재설정 세션이 만료되었습니다. 재설정 메일을 다시 요청해주세요.
+                    {% elif error_code == 'kakao_not_configured' or error_code == 'kakao_failed' %}
+                        카카오 로그인이 아직 설정되지 않았습니다. Supabase 대시보드에서 Kakao Provider를 활성화해주세요.
                     {% elif error_code == 'auth_error' %}
                         인증 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
                     {% else %}
