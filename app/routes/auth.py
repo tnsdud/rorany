@@ -192,18 +192,25 @@ def signup_complete():
 
 
 # ==============================================================================
-# [4] GET /auth/confirm - 이메일 인증 링크 클릭 처리
+# [4] GET /auth/confirm - 이메일 인증 링크 및 OAuth 콜백 처리
 # ==============================================================================
 @auth_bp.route('/confirm')
 def confirm():
     """
-    [4] 이메일 인증 링크 콜백 처리
-    Supabase 인증 이메일의 링크를 타고 들어올 때 token_hash 및 type 전달됨.
-    verify_otp 호출 -> 성공 시 Flask session 저장 -> /mypage 리다이렉트
+    [4] 이메일 인증 링크 및 OAuth 콜백 처리
+    - Supabase 이메일 인증: token_hash 전달
+    - PKCE OAuth 콜백: code 전달
+    - Implicit / Hash fragment 콜백: #access_token 브릿지 처리
     """
     token_hash = request.args.get('token_hash')
     otp_type = request.args.get('type', 'signup')
     code = request.args.get('code')
+    access_token = request.args.get('access_token')
+    refresh_token = request.args.get('refresh_token', '')
+    error_desc = request.args.get('error_description') or request.args.get('error')
+
+    if error_desc:
+        return redirect(url_for('auth.login', error='auth_error'))
 
     try:
         supabase = get_supabase_client()
@@ -222,8 +229,35 @@ def confirm():
             if code_verifier:
                 exchange_params["code_verifier"] = code_verifier
             res = supabase.auth.exchange_code_for_session(exchange_params)
+        elif access_token:
+            # 브릿지를 통해 쿼리 파라미터로 전달된 access_token으로 세션 수립
+            res = supabase.auth.set_session(access_token, refresh_token)
         else:
-            return redirect(url_for('auth.login', error='invalid_verification_link'))
+            # 브라우저 해시(#access_token=...)로 콜백이 들어왔을 경우 JavaScript로 쿼리 파라미터 변환
+            return """
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><title>로그인 처리 중...</title></head>
+            <body style="font-family:sans-serif; text-align:center; padding-top:60px;">
+                <p>카카오 로그인 인증을 완료하는 중입니다. 잠시만 기다려주세요...</p>
+                <script>
+                    const hash = window.location.hash.substring(1);
+                    if (hash) {
+                        const params = new URLSearchParams(hash);
+                        const at = params.get('access_token');
+                        const rt = params.get('refresh_token') || '';
+                        if (at) {
+                            window.location.replace('/auth/confirm?access_token=' + encodeURIComponent(at) + '&refresh_token=' + encodeURIComponent(rt));
+                        } else {
+                            window.location.replace('/auth/login?error=invalid_verification_link');
+                        }
+                    } else {
+                        window.location.replace('/auth/login?error=invalid_verification_link');
+                    }
+                </script>
+            </body>
+            </html>
+            """
 
         if res and res.user:
             user = res.user
