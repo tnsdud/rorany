@@ -324,6 +324,73 @@ PRODUCTS = [
         "sub_desc": "화사한 파스텔 핑크 / 입체 프릴 디테일",
         "image": "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&auto=format&fit=crop&q=80",
         "description": "섬세한 물결 프릴과 입체적인 레이스 드레이핑이 어우러져 청순하면서도 화사한 아우라를 선사하는 미니 드레스입니다."
+    },
+    # --- 디올 오뜨 꾸뛰르 & 레이디 룩 컬렉션 (DIOR STYLE DRESS 6종) ---
+    {
+        "id": 29,
+        "name": "디올 플리츠 셔츠 벨티드 미디 원피스",
+        "category": "DRESS",
+        "badge": "LUXURY",
+        "price": "198,000",
+        "original_price": "245,000",
+        "sub_desc": "시그니처 CD 벨트 디테일 & 정교한 아코디언 플리츠",
+        "image": "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?w=800&auto=format&fit=crop&q=80",
+        "description": "디올의 클래식한 실루엣을 완벽 재현한 셔츠형 미디 드레스입니다. 허리 벨트가 바디 라인을 슬림하게 잡아주며 하단 플리츠 스커트가 우아하게 퍼집니다."
+    },
+    {
+        "id": 30,
+        "name": "디올 뉴룩 오프숄더 오간자 머메이드 드레스",
+        "category": "DRESS",
+        "badge": "HOT",
+        "price": "235,000",
+        "original_price": "289,000",
+        "sub_desc": "1947 뉴룩 실루엣 / 쇄골 라인 오프숄더 칵테일 룩",
+        "image": "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800&auto=format&fit=crop&q=80",
+        "description": "크리스찬 디올의 혁신적인 뉴룩 실루엣에서 영감을 받은 머메이드 드레스입니다. 은은한 오간자 소재가 어깨와 네크라인을 고급스럽게 강조해 파티나 특별한 날 최고의 주인공으로 완성합니다."
+    },
+    {
+        "id": 31,
+        "name": "디올 까나쥬 퀼팅 노슬리브 플레어 원피스",
+        "category": "DRESS",
+        "badge": "BEST",
+        "price": "189,000",
+        "original_price": "230,000",
+        "sub_desc": "시그니처 까나쥬 텍스처 / 단아한 A라인 미니",
+        "image": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&auto=format&fit=crop&q=80",
+        "description": "디올의 상징인 까나쥬 입체 스티치 원단으로 제작된 클래식 A라인 미니 원피스입니다. 단정한 라운드넥과 탄탄한 실루엣으로 하객룩과 격식 있는 자리에 제격입니다."
+    },
+    {
+        "id": 32,
+        "name": "디올 쟈뎅 드 튤 플라워 자수 맥시 드레스",
+        "category": "DRESS",
+        "badge": "EXCLUSIVE",
+        "price": "268,000",
+        "original_price": "320,000",
+        "sub_desc": "장인 수작업 감성 플라워 엠브로이더리 / 3중 튤 레이어드",
+        "image": "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=800&auto=format&fit=crop&q=80",
+        "description": "디올 정원의 꽃들을 섬세하게 수놓은 듯한 오뜨 꾸뛰르 무드의 롱 드레스입니다. 얇은 튤 메쉬 소재가 겹쳐져 걸을 때마다 몽환적이고 기품 있는 분위기를 연출합니다."
+    },
+    {
+        "id": 33,
+        "name": "디올 트위드 바 자켓 셋업 플레어 원피스",
+        "category": "DRESS",
+        "badge": "MD추천",
+        "price": "215,000",
+        "original_price": "260,000",
+        "sub_desc": "허리를 잘록하게 감싸는 바 자켓(Bar Jacket) 핏 원피스",
+        "image": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=800&auto=format&fit=crop&q=80",
+        "description": "입체적인 구조감의 트위드 원단과 디올 전통의 바 자켓 페플럼 디테일을 접목한 럭셔리 드레스입니다. 포멀하면서도 세련된 페미닌 감성을 선사합니다."
+    },
+    {
+        "id": 34,
+        "name": "디올 뚜알 드 주이 패턴 실크 랩 원피스",
+        "category": "DRESS",
+        "badge": "NEW",
+        "price": "178,000",
+        "original_price": "218,000",
+        "sub_desc": "헤리티지 뚜알 드 주이 그래픽 / 내추럴 실크 터치 랩 스타일",
+        "image": "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800&auto=format&fit=crop&q=80",
+        "description": "프랑스 전통 목가적 감성의 디올 뚜알 드 주이 나염이 매력적인 실크 터치 랩 원피스입니다. 브이넥과 리본 랩 디테일이 체형을 자연스럽고 날씬하게 커버해 줍니다."
     }
 ]
 
