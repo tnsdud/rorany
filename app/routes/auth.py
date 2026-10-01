@@ -363,7 +363,10 @@ def kakao():
         res = supabase.auth.sign_in_with_oauth({
             "provider": "kakao",
             "options": {
-                "redirect_to": redirect_to
+                "redirect_to": redirect_to,
+                "query_params": {
+                    "scope": "profile_nickname profile_image"
+                }
             }
         })
         verifier = getattr(supabase.auth, '_storage', None)
