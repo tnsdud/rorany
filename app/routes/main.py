@@ -789,6 +789,79 @@ def update_cart_quantity_api(cart_id):
         }), 500
 
 
+@main_bp.route('/cart/<int:cart_id>', methods=['DELETE'])
+def delete_cart_item_api(cart_id):
+    """
+    [장바구니 아이템 삭제 기능] DELETE /cart/<cart_id>
+    - 본인 소유의 장바구니 아이템인지 확인 후 삭제
+    - 미로그인 시 401 반환
+    - 타인 소유 시 403 반환
+    - 성공 시 남은 장바구니 품목 수와 함께 JSON 반환
+    """
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "error": "login_required",
+            "message": "로그인이 필요합니다.",
+            "redirect": url_for('auth.login')
+        }), 401
+
+    supabase = get_supabase_client()
+
+    try:
+        # 1. 본인 소유의 장바구니 아이템인지 확인
+        cart_res = supabase.table("carts").select("id, user_id, product_id, option_id").eq("id", cart_id).execute()
+        if not cart_res.data:
+            # DB에 없는 경우 세션 동기화 후 성공 간주하거나 404
+            # 만약 이미 삭제되었거나 세션에만 있는 경우 대비
+            return jsonify({
+                "success": False,
+                "message": "해당 장바구니 품목을 찾을 수 없습니다."
+            }), 404
+
+        cart_item = cart_res.data[0]
+        if str(cart_item.get("user_id")) != str(user_id):
+            return jsonify({
+                "success": False,
+                "error": "forbidden",
+                "message": "본인의 장바구니 상품만 삭제할 수 있습니다."
+            }), 403
+
+        product_id = cart_item.get("product_id")
+
+        # 2. carts 테이블에서 삭제
+        supabase.table("carts").delete().eq("id", cart_id).execute()
+
+        # 3. 세션 장바구니에서도 제거
+        if product_id:
+            cart = session.get('cart', {})
+            pid_str = str(product_id)
+            if pid_str in cart:
+                del cart[pid_str]
+                session['cart'] = cart
+                session.modified = True
+
+        # 4. 사용자의 남은 장바구니 품목 수 조회
+        remaining_res = supabase.table("carts").select("id", count="exact").eq("user_id", user_id).execute()
+        remaining_count = remaining_res.count if remaining_res.count is not None else len(session.get('cart', {}))
+
+        return jsonify({
+            "success": True,
+            "message": "상품이 장바구니에서 삭제되었습니다.",
+            "cart_id": cart_id,
+            "remaining_count": remaining_count
+        })
+
+    except Exception as e:
+        import logging
+        logging.error(f"[Delete Cart Item Error] {e}")
+        return jsonify({
+            "success": False,
+            "message": f"장바구니 삭제 처리 중 오류가 발생했습니다: {str(e)}"
+        }), 500
+
+
 @main_bp.route('/cart/add-detailed/<int:product_id>', methods=['POST'])
 def add_to_cart_detailed(product_id):
     """
@@ -1207,34 +1280,69 @@ def delete_account():
 
 @main_bp.route('/cart')
 def cart():
-    """장바구니 화면"""
-    raw_cart = session.get('cart', {})
+    """장바구니 화면 (DB의 carts 테이블 및 세션 장바구니 통합 조회)"""
+    user_id = session.get('user_id')
     cart_items = []
     total_price = 0
     total_count = 0
 
-    for pid_str, quantity in raw_cart.items():
+    # 1. 로그인 사용자라면 Supabase carts 테이블에서 cart_id 포함하여 조회 시도
+    if user_id:
         try:
-            pid = int(pid_str)
-        except ValueError:
-            continue
+            supabase = get_supabase_client()
+            db_carts = supabase.table("carts").select("id, product_id, option_id, quantity").eq("user_id", user_id).execute()
+            if db_carts.data:
+                for row in db_carts.data:
+                    cid = row["id"]
+                    pid = row["product_id"]
+                    quantity = row["quantity"]
+                    product = PRODUCT_DICT.get(pid)
+                    if product:
+                        price_int = int(product['price'].replace(',', ''))
+                        subtotal = price_int * quantity
+                        total_price += subtotal
+                        total_count += quantity
+                        cart_items.append({
+                            'cart_id': cid,
+                            'id': product['id'],
+                            'name': product['name'],
+                            'category': product['category'],
+                            'image': product['image'],
+                            'unit_price': price_int,
+                            'unit_price_formatted': product['price'],
+                            'quantity': quantity,
+                            'subtotal': subtotal
+                        })
+        except Exception as e:
+            import logging
+            logging.error(f"[Cart Fetch Error] {e}")
 
-        product = PRODUCT_DICT.get(pid)
-        if product:
-            price_int = int(product['price'].replace(',', ''))
-            subtotal = price_int * quantity
-            total_price += subtotal
-            total_count += quantity
-            cart_items.append({
-                'id': product['id'],
-                'name': product['name'],
-                'category': product['category'],
-                'image': product['image'],
-                'unit_price': price_int,
-                'unit_price_formatted': product['price'],
-                'quantity': quantity,
-                'subtotal': subtotal
-            })
+    # 2. DB 결과가 없거나 미로그인 상태라면 세션 장바구니 사용
+    if not cart_items:
+        raw_cart = session.get('cart', {})
+        for pid_str, quantity in raw_cart.items():
+            try:
+                pid = int(pid_str)
+            except ValueError:
+                continue
+
+            product = PRODUCT_DICT.get(pid)
+            if product:
+                price_int = int(product['price'].replace(',', ''))
+                subtotal = price_int * quantity
+                total_price += subtotal
+                total_count += quantity
+                cart_items.append({
+                    'cart_id': None,
+                    'id': product['id'],
+                    'name': product['name'],
+                    'category': product['category'],
+                    'image': product['image'],
+                    'unit_price': price_int,
+                    'unit_price_formatted': product['price'],
+                    'quantity': quantity,
+                    'subtotal': subtotal
+                })
 
     return render_template('cart.html', cart_items=cart_items, total_price=total_price, total_count=total_count)
 
