@@ -680,6 +680,115 @@ def add_to_cart_api():
         }), 500
 
 
+@main_bp.route('/cart/<int:cart_id>', methods=['PATCH'])
+def update_cart_quantity_api(cart_id):
+    """
+    [장바구니 수량 변경 기능] PATCH /cart/<cart_id>
+    - 요청 body: quantity (변경할 새 수량)
+    - 로그인 여부 확인 및 본인 소유 장바구니 아이템 확인 (다른 사용자의 cart_id 접근 차단)
+    - quantity가 1 미만이면 에러
+    - 변경하려는 quantity가 해당 옵션의 stock을 초과하면
+      "재고가 부족합니다(현재 N개)" 에러, 변경하지 않음
+    - 성공 시 JSON 반환
+    """
+    # 1. 로그인 여부 확인
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "error": "login_required",
+            "message": "로그인이 필요합니다.",
+            "redirect": url_for('auth.login')
+        }), 401
+
+    # 2. 요청 body 파라미터 추출
+    data = request.get_json(silent=True) or request.form
+    quantity_raw = data.get('quantity') if data else None
+
+    if quantity_raw is None:
+        return jsonify({
+            "success": False,
+            "message": "변경할 수량(quantity)을 입력해주세요."
+        }), 400
+
+    try:
+        new_quantity = int(quantity_raw)
+    except (TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "message": "유효한 숫자로 수량을 입력해주세요."
+        }), 400
+
+    # 3. quantity가 1 미만이면 에러
+    if new_quantity < 1:
+        return jsonify({
+            "success": False,
+            "message": "수량은 1개 이상이어야 합니다."
+        }), 400
+
+    supabase = get_supabase_client()
+
+    try:
+        # 4. 장바구니 아이템 조회 및 본인 소유 확인 (다른 사용자 cart_id 접근 차단)
+        cart_res = supabase.table("carts").select("id, user_id, product_id, option_id, quantity").eq("id", cart_id).execute()
+        if not cart_res.data:
+            return jsonify({
+                "success": False,
+                "message": "해당 장바구니 품목을 찾을 수 없습니다."
+            }), 404
+
+        cart_item = cart_res.data[0]
+        if str(cart_item.get("user_id")) != str(user_id):
+            return jsonify({
+                "success": False,
+                "error": "forbidden",
+                "message": "본인의 장바구니 상품만 수정할 수 있습니다."
+            }), 403
+
+        option_id = cart_item.get("option_id")
+        product_id = cart_item.get("product_id")
+
+        # 5. 해당 옵션의 stock(stock_quantity) 조회 및 초과 검증
+        current_stock = 99  # 옵션이 없는 경우 기본값
+        if option_id:
+            opt_res = supabase.table("product_options").select("id, stock_quantity").eq("id", option_id).execute()
+            if opt_res.data:
+                current_stock = opt_res.data[0].get("stock_quantity", 0)
+
+        # 변경하려는 quantity가 해당 옵션의 stock을 초과하면 변경하지 않고 에러 반환
+        if new_quantity > current_stock:
+            return jsonify({
+                "success": False,
+                "message": f"재고가 부족합니다(현재 {current_stock}개)"
+            }), 400
+
+        # 6. 수량 업데이트
+        supabase.table("carts").update({"quantity": new_quantity}).eq("id", cart_id).execute()
+
+        # 세션 장바구니 동기화
+        if product_id:
+            cart = session.get('cart', {})
+            pid_str = str(product_id)
+            cart[pid_str] = new_quantity
+            session['cart'] = cart
+            session.modified = True
+
+        return jsonify({
+            "success": True,
+            "message": f"수량이 {new_quantity}개로 변경되었습니다.",
+            "cart_id": cart_id,
+            "quantity": new_quantity
+        })
+
+    except Exception as e:
+        import logging
+        logging.error(f"[Update Cart Quantity Error] {e}")
+        return jsonify({
+            "success": False,
+            "message": f"수량 변경 처리 중 오류가 발생했습니다: {str(e)}"
+        }), 500
+
+
 @main_bp.route('/cart/add-detailed/<int:product_id>', methods=['POST'])
 def add_to_cart_detailed(product_id):
     """
