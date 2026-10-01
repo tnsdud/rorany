@@ -1,4 +1,6 @@
+import base64
 from functools import wraps
+import json
 import os
 from flask import (
     Blueprint,
@@ -18,6 +20,49 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 # ==============================================================================
 # Supabase 클라이언트 초기화 헬퍼 함수
 # ==============================================================================
+def _get_jwt_payload(token: str) -> dict:
+    """JWT 토큰의 페이로드를 Base64 디코딩하여 dict로 반환합니다."""
+    try:
+        parts = token.strip().split('.')
+        if len(parts) >= 2:
+            payload = parts[1]
+            padded = payload + '=' * ((4 - len(payload) % 4) % 4)
+            return json.loads(base64.urlsafe_b64decode(padded).decode('utf-8'))
+    except Exception:
+        pass
+    return {}
+
+
+def resolve_supabase_key(url: str, *candidates) -> str:
+    """
+    여러 환경변수 키 후보 중 URL의 프로젝트 ID(ref)와 일치하며
+    클라이언트 인증에 적합한 anon 키를 우선적으로 자동 선별합니다.
+    """
+    url_clean = (url or '').strip().lower()
+    project_ref = ''
+    if '.supabase.co' in url_clean:
+        project_ref = url_clean.split('.supabase.co')[0].split('//')[-1]
+
+    valid_candidates = [c.strip() for c in candidates if c and isinstance(c, str) and c.strip()]
+    if not valid_candidates:
+        return ''
+
+    matching_keys = []
+    for c in valid_candidates:
+        payload = _get_jwt_payload(c)
+        ref = payload.get('ref', '')
+        role = payload.get('role', '')
+        if project_ref and ref == project_ref:
+            matching_keys.append((role == 'anon', c))
+
+    if matching_keys:
+        # role == 'anon'인 키가 최우선
+        matching_keys.sort(key=lambda x: x[0], reverse=True)
+        return matching_keys[0][1]
+
+    return valid_candidates[0]
+
+
 def get_site_url() -> str:
     """
     사이트 기본 URL을 반환합니다.
@@ -36,13 +81,16 @@ def get_site_url() -> str:
 def get_supabase_client() -> Client:
     """
     Supabase 클라이언트를 반환합니다.
-    환경변수 SUPABASE_URL 및 SUPABASE_KEY(또는 SUPABASE_ANON_KEY)를 사용합니다.
+    환경변수 SUPABASE_URL 및 키(SUPABASE_ANON_KEY / SUPABASE_KEY / SUPABASE_SERVICE_KEY) 중
+    현재 프로젝트에 맞는 유효한 키를 자동 선별하여 사용합니다.
     """
-    supabase_url = os.getenv("SUPABASE_URL", "")
-    supabase_key = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_ANON_KEY", "")
-    if not supabase_url or not supabase_key:
-        # 환경변수가 없을 경우 빈 클라이언트를 방지하기 위해 예외 발생 가능
-        pass
+    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    supabase_key = resolve_supabase_key(
+        supabase_url,
+        os.getenv("SUPABASE_ANON_KEY"),
+        os.getenv("SUPABASE_KEY"),
+        os.getenv("SUPABASE_SERVICE_KEY")
+    )
     return create_client(supabase_url, supabase_key)
 
 
