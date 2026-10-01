@@ -439,33 +439,53 @@ def product_detail(product_id):
     return render_template('product_detail.html', product=product_data, colors=colors)
 
 
-@main_bp.route('/api/products/<int:product_id>/options')
-def get_product_options(product_id):
+@main_bp.route('/api/products/<int:product_id>/sizes')
+def get_product_sizes(product_id):
     """
-    [색상별 사이즈 목록 API] GET /api/products/<product_id>/options?color=...
-    - 색상 선택 시 해당 색상의 사이즈, 재고, 추가금액 목록 반환
+    [색상별 사이즈 목록 API] GET /api/products/<product_id>/sizes?color=<선택한 색상>
+    - product_options에서 product_id + color로 필터링
+    - size, stock을 JSON 배열로 반환
+      예: [{"size": "S", "stock": 3}, {"size": "M", "stock": 0}]
     """
     selected_color = request.args.get('color', '').strip()
     supabase = get_supabase_client()
-    options_list = []
+    result = []
 
     try:
-        query = supabase.table("product_options").select("id, size, extra_price, stock_quantity, sku").eq("product_id", product_id)
+        query = supabase.table("product_options").select("id, size, stock_quantity, extra_price").eq("product_id", product_id)
         if selected_color and selected_color != "기본":
             query = query.eq("color", selected_color)
         res = query.order("id").execute()
-        options_list = res.data or []
+        rows = res.data or []
+
+        for row in rows:
+            result.append({
+                "id": row.get("id"),
+                "size": row.get("size", "FREE"),
+                "stock": row.get("stock_quantity", 0),
+                "extra_price": row.get("extra_price", 0)
+            })
     except Exception as e:
         import logging
-        logging.error(f"[API Options Fetch Error] {e}")
+        logging.error(f"[API Sizes Fetch Error] {e}")
 
-    # 데이터가 없을 때의 기본 fallback 사이즈
-    if not options_list:
-        options_list = [
-            {"id": 0, "size": "FREE", "extra_price": 0, "stock_quantity": 99, "sku": f"PROD-{product_id}-FREE"}
+    # 등록된 옵션이 없는 상품일 경우 기본 안내용 항목 반환
+    if not result:
+        result = [
+            {"id": 0, "size": "FREE", "stock": 99, "extra_price": 0}
         ]
 
-    return jsonify({"options": options_list})
+    # [{"size": "S", "stock": 3}, ...] JSON 배열 반환
+    return jsonify(result)
+
+
+@main_bp.route('/api/products/<int:product_id>/options')
+def get_product_options(product_id):
+    """
+    [색상별 사이즈 목록 API (호환성 유지)] GET /api/products/<product_id>/options?color=...
+    """
+    sizes_res = get_product_sizes(product_id)
+    return jsonify({"options": sizes_res.get_json()})
 
 
 @main_bp.route('/cart/add-detailed/<int:product_id>', methods=['POST'])

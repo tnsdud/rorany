@@ -190,39 +190,40 @@ document.addEventListener('DOMContentLoaded', function () {
         stockNoticeText.className = 'form-text small text-muted';
 
         // JavaScript fetch API를 통해 해당 색상의 사이즈 목록 비동기 조회
-        const url = `/api/products/${productId}/options?color=` + encodeURIComponent(selectedColor);
+        // 요청 경로: GET /api/products/<product_id>/sizes?color=<선택한 색상>
+        const url = `/api/products/${productId}/sizes?color=` + encodeURIComponent(selectedColor);
         fetch(url)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('옵션 정보를 가져오는데 실패했습니다.');
+                    throw new Error('사이즈 정보를 가져오는데 실패했습니다.');
                 }
                 return response.json();
             })
             .then(data => {
-                const options = data.options || [];
+                // data 예: [{"size": "S", "stock": 3}, {"size": "M", "stock": 0}]
+                const sizesList = Array.isArray(data) ? data : (data.options || []);
                 sizeSelect.innerHTML = '<option value="" selected disabled>사이즈를 선택해주세요</option>';
 
-                if (options.length === 0) {
+                if (sizesList.length === 0) {
                     sizeSelect.innerHTML = '<option value="" selected disabled>선택 가능한 사이즈가 없습니다.</option>';
                     sizeSelect.disabled = true;
                     return;
                 }
 
-                // 사이즈 옵션들을 드롭다운에 추가
-                options.forEach(opt => {
+                // 사이즈 드롭다운 동적 생성
+                sizesList.forEach(item => {
                     const optionElem = document.createElement('option');
-                    optionElem.value = opt.size;
-                    optionElem.dataset.optionId = opt.id;
-                    optionElem.dataset.stock = opt.stock_quantity;
-                    optionElem.dataset.extraPrice = opt.extra_price || 0;
+                    optionElem.value = item.size;
+                    optionElem.dataset.optionId = item.id || '';
+                    optionElem.dataset.stock = item.stock;
 
-                    // 재고가 0인 경우 품절 표시 및 선택 불가(disabled) 처리
-                    if (opt.stock_quantity <= 0) {
-                        optionElem.textContent = `${opt.size} - [품절]`;
+                    // stock이 0인 항목은 옵션 텍스트에 "(품절)" 표시 + disabled 처리
+                    if (item.stock === 0 || item.stock <= 0) {
+                        optionElem.textContent = `${item.size} (품절)`;
                         optionElem.disabled = true;
                         optionElem.className = 'text-danger';
                     } else {
-                        optionElem.textContent = `${opt.size} (남은 재고: ${opt.stock_quantity}개)`;
+                        optionElem.textContent = `${item.size} (재고: ${item.stock}개)`;
                     }
 
                     sizeSelect.appendChild(optionElem);
