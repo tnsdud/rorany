@@ -216,10 +216,12 @@ def confirm():
                 "type": otp_type
             })
         elif code:
-            # PKCE 코드 기반 exchange
-            res = supabase.auth.exchange_code_for_session({
-                "auth_code": code
-            })
+            # PKCE 코드 기반 exchange (세션에 저장된 code_verifier 사용)
+            code_verifier = session.pop('code_verifier', None)
+            exchange_params = {"auth_code": code}
+            if code_verifier:
+                exchange_params["code_verifier"] = code_verifier
+            res = supabase.auth.exchange_code_for_session(exchange_params)
         else:
             return redirect(url_for('auth.login', error='invalid_verification_link'))
 
@@ -364,6 +366,13 @@ def kakao():
                 "redirect_to": redirect_to
             }
         })
+        verifier = getattr(supabase.auth, '_storage', None)
+        if verifier:
+            storage_key = getattr(supabase.auth, '_storage_key', 'supabase.auth')
+            code_verifier = supabase.auth._storage.get_item(f"{storage_key}-code-verifier")
+            if code_verifier:
+                session['code_verifier'] = code_verifier
+
         if res and res.url:
             return redirect(res.url)
         return redirect(url_for('auth.login', error='kakao_failed'))
