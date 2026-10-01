@@ -78,11 +78,12 @@ def get_site_url() -> str:
         return "http://localhost:5000"
 
 
-def get_supabase_client() -> Client:
+def get_supabase_client(use_session: bool = True) -> Client:
     """
     Supabase 클라이언트를 반환합니다.
     환경변수 SUPABASE_URL 및 키(SUPABASE_ANON_KEY / SUPABASE_KEY / SUPABASE_SERVICE_KEY) 중
     현재 프로젝트에 맞는 유효한 키를 자동 선별하여 사용합니다.
+    세션에 access_token이 있으면 클라이언트의 auth 세션을 복원하여 RLS 정책(auth.uid())을 통과합니다.
     """
     supabase_url = os.getenv("SUPABASE_URL", "").strip()
     supabase_key = resolve_supabase_key(
@@ -91,7 +92,16 @@ def get_supabase_client() -> Client:
         os.getenv("SUPABASE_KEY"),
         os.getenv("SUPABASE_SERVICE_KEY")
     )
-    return create_client(supabase_url, supabase_key)
+    client = create_client(supabase_url, supabase_key)
+    if use_session:
+        try:
+            access_token = session.get('access_token')
+            refresh_token = session.get('refresh_token', '')
+            if access_token:
+                client.auth.set_session(access_token, refresh_token)
+        except Exception:
+            pass
+    return client
 
 
 # ==============================================================================

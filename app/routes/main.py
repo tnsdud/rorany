@@ -488,6 +488,129 @@ def get_product_options(product_id):
     return jsonify({"options": sizes_res.get_json()})
 
 
+@main_bp.route('/cart/add', methods=['POST'])
+def add_to_cart_api():
+    """
+    [장바구니 담기 기능] POST /cart/add
+    - 요청 body: product_option_id, quantity (JSON 또는 Form 데이터 모두 지원)
+    - 로그인 안 했으면 /auth/login 으로 리다이렉트 (AJAX 요청 시 redirect_url 반환)
+    - 담기 전에 product_options.stock(stock_quantity)을 조회해서 요청 수량보다 적으면
+      "재고가 부족합니다(현재 N개)" 에러 반환, DB에 아무 것도 쓰지 않음
+    - carts 테이블에 upsert (같은 옵션이면 수량 누적)
+    - 누적 후 수량이 재고를 초과하게 되는 경우도 동일하게 에러 처리
+    - 성공 시 JSON: {"success": True, "message": "장바구니에 담겼습니다"}
+    """
+    # 1. 로그인 여부 확인 (미로그인 시 /auth/login 으로 리다이렉트)
+    user_id = session.get('user_id')
+    is_json_request = request.is_json or request.headers.get('Accept', '').find('application/json') != -1
+
+    if not user_id:
+        if is_json_request:
+            return jsonify({
+                "success": False,
+                "error": "login_required",
+                "message": "로그인이 필요합니다.",
+                "redirect": url_for('auth.login')
+            }), 401
+        return redirect(url_for('auth.login', error='login_required'))
+
+    # 2. 요청 파라미터 추출 (JSON 또는 Form)
+    data = request.get_json(silent=True) or request.form
+    product_option_id = data.get('product_option_id') or data.get('option_id')
+    quantity_raw = data.get('quantity', 1)
+
+    try:
+        product_option_id = int(product_option_id)
+        quantity = int(quantity_raw)
+        if quantity <= 0:
+            quantity = 1
+    except (TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "message": "유효하지 않은 옵션 또는 수량입니다."
+        }), 400
+
+    supabase = get_supabase_client()
+
+    try:
+        # 3. product_options에서 해당 옵션의 재고(stock_quantity) 및 product_id 조회
+        opt_res = supabase.table("product_options").select("id, product_id, color, size, stock_quantity").eq("id", product_option_id).execute()
+        if not opt_res.data:
+            return jsonify({
+                "success": False,
+                "message": "해당 상품 옵션을 찾을 수 없습니다."
+            }), 404
+
+        option_row = opt_res.data[0]
+        current_stock = option_row.get("stock_quantity", 0)
+        product_id = option_row.get("product_id")
+
+        # 요청 수량이 재고보다 많은 경우 에러 반환 (DB에 아무것도 쓰지 않음)
+        if quantity > current_stock:
+            return jsonify({
+                "success": False,
+                "message": f"재고가 부족합니다(현재 {current_stock}개)"
+            }), 400
+
+        # 4. 기존 carts 테이블 조회하여 동일 옵션 장바구니 품목 확인
+        cart_res = supabase.table("carts").select("id, quantity").eq("user_id", user_id).eq("option_id", product_option_id).execute()
+        existing_cart_item = cart_res.data[0] if cart_res.data else None
+
+        if existing_cart_item:
+            # 기존 수량 누적
+            new_quantity = existing_cart_item["quantity"] + quantity
+            # 누적 후 수량이 재고를 초과하게 되는 경우 에러 처리
+            if new_quantity > current_stock:
+                return jsonify({
+                    "success": False,
+                    "message": f"재고가 부족합니다(현재 {current_stock}개)"
+                }), 400
+
+            # 수량 업데이트
+            try:
+                supabase.table("carts").update({"quantity": new_quantity}).eq("id", existing_cart_item["id"]).execute()
+            except Exception:
+                pass
+        else:
+            # 새 장바구니 아이템 추가 (누적 수량 = quantity)
+            if quantity > current_stock:
+                return jsonify({
+                    "success": False,
+                    "message": f"재고가 부족합니다(현재 {current_stock}개)"
+                }), 400
+
+            new_cart_payload = {
+                "user_id": user_id,
+                "product_id": product_id,
+                "option_id": product_option_id,
+                "quantity": quantity
+            }
+            try:
+                supabase.table("carts").insert(new_cart_payload).execute()
+            except Exception:
+                pass
+
+        # 세션 장바구니 동기화 (기존 세션 기반 뷰 호환)
+        cart = session.get('cart', {})
+        pid_str = str(product_id)
+        cart[pid_str] = cart.get(pid_str, 0) + quantity
+        session['cart'] = cart
+        session.modified = True
+
+        return jsonify({
+            "success": True,
+            "message": "장바구니에 담겼습니다"
+        })
+
+    except Exception as e:
+        import logging
+        logging.error(f"[Add To Cart Error] {e}")
+        return jsonify({
+            "success": False,
+            "message": f"장바구니 처리 중 오류가 발생했습니다: {str(e)}"
+        }), 500
+
+
 @main_bp.route('/cart/add-detailed/<int:product_id>', methods=['POST'])
 def add_to_cart_detailed(product_id):
     """

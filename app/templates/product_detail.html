@@ -85,9 +85,9 @@
                 <hr class="my-4 text-muted">
 
                 <!-- 옵션 선택 및 장바구니 담기 폼 -->
-                <form method="POST" action="{{ url_for('main.add_to_cart_detailed', product_id=product.id) }}" id="productOrderForm">
-                    <!-- 숨겨진 필드: 선택된 option_id 저장 -->
-                    <input type="hidden" name="option_id" id="selectedOptionId" value="">
+                <form method="POST" action="{{ url_for('main.add_to_cart_api') }}" id="productOrderForm">
+                    <!-- 숨겨진 필드: 선택된 product_option_id 저장 -->
+                    <input type="hidden" name="product_option_id" id="selectedOptionId" value="">
 
                     <!-- (1) 색상 선택 드롭다운 (DISTINCT 조회) -->
                     <div class="mb-3">
@@ -283,6 +283,68 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (currentVal < 1) {
             this.value = 1;
         }
+    });
+
+    // 폼 제출 이벤트 (AJAX fetch 처리 및 JSON 응답 핸들링)
+    const productOrderForm = document.getElementById('productOrderForm');
+    productOrderForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const optionId = selectedOptionId.value;
+        const quantity = parseInt(quantityInput.value, 10) || 1;
+
+        if (!optionId) {
+            alert('색상과 사이즈 옵션을 먼저 선택해주세요.');
+            return;
+        }
+
+        addToCartBtn.disabled = true;
+        const originalBtnText = addToCartBtn.innerHTML;
+        addToCartBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>담는 중...';
+
+        fetch('/cart/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                product_option_id: optionId,
+                quantity: quantity
+            })
+        })
+        .then(response => {
+            if (response.status === 401) {
+                // 로그인 안 했으면 /auth/login 으로 리다이렉트
+                alert('로그인이 필요한 서비스입니다. 로그인 페이지로 이동합니다.');
+                window.location.href = '/auth/login';
+                return null;
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (!result) return;
+
+            if (result.success) {
+                // 성공 시 메시지 안내 및 장바구니 페이지로 이동 여부 확인
+                if (confirm(result.message + '\n장바구니 페이지로 이동하시겠습니까?')) {
+                    window.location.href = '/cart';
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                // 재고 부족 등의 에러 메시지 알림
+                alert(result.message || '장바구니 담기에 실패했습니다.');
+            }
+        })
+        .catch(err => {
+            console.error('Add to cart error:', err);
+            alert('장바구니 담기 요청 중 통신 오류가 발생했습니다.');
+        })
+        .finally(() => {
+            addToCartBtn.disabled = false;
+            addToCartBtn.innerHTML = originalBtnText;
+        });
     });
 });
 </script>
