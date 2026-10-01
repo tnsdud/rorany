@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} | VIBE-FASHION{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- 상단 네비게이션 경로 -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}" class="text-decoration-none text-muted">홈</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}#products" class="text-decoration-none text-muted">컬렉션</a></li>
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- 플래시 메시지 알림 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm rounded-4 mb-4" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>{{ message }}
+                    <a href="{{ url_for('main.cart') }}" class="alert-link ms-2 fw-semibold">장바구니 바로가기 &rarr;</a>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row g-5">
+        <!-- 1. 좌측: 상품 이미지 영역 -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden sticky-top" style="top: 100px;">
+                <div class="position-relative bg-light text-center">
+                    {% if product.badge %}
+                    <span class="position-absolute top-0 start-0 z-2 m-3 badge rounded-pill px-3 py-2 fw-bold shadow-sm {% if product.badge == 'BEST' %}bg-danger{% else %}bg-dark{% endif %}">
+                        {{ product.badge }}
+                    </span>
+                    {% endif %}
+                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="img-fluid w-100" style="object-fit: cover; max-height: 580px;" id="mainProductImage">
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 우측: 상품 상세 정보 및 옵션 선택 / 장바구니 담기 폼 -->
+        <div class="col-lg-6">
+            <div class="ps-lg-4">
+                <!-- 카테고리 & 뱃지 -->
+                <div class="mb-2">
+                    <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill small fw-semibold">
+                        {{ product.category }}
+                    </span>
+                </div>
+
+                <!-- 상품명 -->
+                <h2 class="fw-bold text-dark mb-3 lh-sm">{{ product.name }}</h2>
+
+                <!-- 가격 영역 (할인가 / 정가 표시) -->
+                <div class="p-3 rounded-4 bg-light mb-4">
+                    {% if product.original_price %}
+                    <div class="text-muted text-decoration-line-through small mb-1">
+                        정상가: {{ "{:,}".format(product.original_price) }}원
+                    </div>
+                    {% endif %}
+                    <div class="d-flex align-items-baseline gap-2">
+                        <span class="fs-2 fw-bold text-danger">
+                            {{ "{:,}".format(product.price) }}<span class="fs-5 fw-normal text-dark">원</span>
+                        </span>
+                        {% if product.original_price and product.original_price > product.price %}
+                        {% set discount_rate = ((product.original_price - product.price) / product.original_price * 100)|round|int %}
+                        <span class="badge bg-danger rounded-pill px-2 py-1 small fw-bold">
+                            {{ discount_rate }}% OFF
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- 상품 설명 -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark mb-2">상품 설명</h6>
+                    <p class="text-secondary small leading-relaxed" style="white-space: pre-line;">
+                        {{ product.description }}
+                    </p>
+                </div>
+
+                <hr class="my-4 text-muted">
+
+                <!-- 옵션 선택 및 장바구니 담기 폼 -->
+                <form method="POST" action="{{ url_for('main.add_to_cart_detailed', product_id=product.id) }}" id="productOrderForm">
+                    <!-- 숨겨진 필드: 선택된 option_id 저장 -->
+                    <input type="hidden" name="option_id" id="selectedOptionId" value="">
+
+                    <!-- (1) 색상 선택 드롭다운 (DISTINCT 조회) -->
+                    <div class="mb-3">
+                        <label for="colorSelect" class="form-label small fw-semibold text-dark">
+                            <i class="bi bi-palette me-1" style="color: #7c3aed;"></i>색상(Color) 선택 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select rounded-3 py-2" id="colorSelect" name="color" required>
+                            <option value="" selected disabled>색상을 선택해주세요</option>
+                            {% for color in colors %}
+                            <option value="{{ color }}">{{ color }}</option>
+                            {% else %}
+                            <option value="기본" selected>기본 색상</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- (2) 사이즈 선택 드롭다운 (fetch를 통해 동적 로드) -->
+                    <div class="mb-3">
+                        <label for="sizeSelect" class="form-label small fw-semibold text-dark">
+                            <i class="bi bi-rulers me-1" style="color: #7c3aed;"></i>사이즈(Size) 선택 <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select rounded-3 py-2" id="sizeSelect" name="size" disabled required>
+                            <option value="" selected disabled>먼저 색상을 선택해주세요</option>
+                        </select>
+                        <div class="form-text small" id="stockNoticeText">
+                            색상을 선택하시면 재고 상태를 실시간으로 확인하실 수 있습니다.
+                        </div>
+                    </div>
+
+                    <!-- (3) 수량 선택 (1~10, 선택 옵션 재고에 따라 max 자동 제한) -->
+                    <div class="mb-4">
+                        <label for="quantityInput" class="form-label small fw-semibold text-dark">
+                            <i class="bi bi-box-seam me-1" style="color: #7c3aed;"></i>수량 선택
+                        </label>
+                        <div class="d-flex align-items-center gap-3">
+                            <input type="number" class="form-control rounded-3 py-2 text-center fw-bold" id="quantityInput" name="quantity" value="1" min="1" max="10" style="max-width: 120px;" required>
+                            <span class="small text-muted" id="maxStockLabel">
+                                (최대 10개까지 선택 가능)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- (4) 최종 금액 안내 및 장바구니 담기 버튼 -->
+                    <div class="d-grid gap-2 pt-2">
+                        <button type="submit" class="btn text-white py-3 fw-bold rounded-pill shadow-sm fs-6" id="addToCartBtn" style="background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);">
+                            <i class="bi bi-cart-plus me-2"></i>장바구니 담기
+                        </button>
+                        <a href="{{ url_for('main.index') }}#products" class="btn btn-outline-dark py-2 rounded-pill small fw-semibold mt-1">
+                            <i class="bi bi-arrow-left me-1"></i>목록으로 돌아가기
+                        </a>
+                    </div>
+                </form>
+
+                <!-- 쇼핑 혜택 안내 -->
+                <div class="mt-4 p-3 rounded-4 bg-light border">
+                    <div class="row g-2 text-center text-muted small">
+                        <div class="col-4 border-end">
+                            <i class="bi bi-truck d-block fs-5 text-dark mb-1"></i>
+                            무료 배송 (5만원 이상)
+                        </div>
+                        <div class="col-4 border-end">
+                            <i class="bi bi-shield-check d-block fs-5 text-dark mb-1"></i>
+                            100% 정품 보장
+                        </div>
+                        <div class="col-4">
+                            <i class="bi bi-arrow-repeat d-block fs-5 text-dark mb-1"></i>
+                            7일 이내 환불 가능
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================
+     JavaScript: 색상 선택 시 fetch를 통한 사이즈/재고 동적 업데이트
+     ============================================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const productId = {{ product.id }};
+    const colorSelect = document.getElementById('colorSelect');
+    const sizeSelect = document.getElementById('sizeSelect');
+    const quantityInput = document.getElementById('quantityInput');
+    const selectedOptionId = document.getElementById('selectedOptionId');
+    const stockNoticeText = document.getElementById('stockNoticeText');
+    const maxStockLabel = document.getElementById('maxStockLabel');
+    const addToCartBtn = document.getElementById('addToCartBtn');
+
+    // 색상 선택 드롭다운 변경 이벤트
+    colorSelect.addEventListener('change', function () {
+        const selectedColor = this.value;
+        if (!selectedColor) return;
+
+        // 사이즈 드롭다운 초기화 및 로딩 표시
+        sizeSelect.disabled = true;
+        sizeSelect.innerHTML = '<option value="" selected disabled>사이즈 목록 불러오는 중...</option>';
+        selectedOptionId.value = '';
+        stockNoticeText.textContent = '재고 정보를 조회하고 있습니다...';
+        stockNoticeText.className = 'form-text small text-muted';
+
+        // JavaScript fetch API를 통해 해당 색상의 사이즈 목록 비동기 조회
+        const url = `/api/products/${productId}/options?color=` + encodeURIComponent(selectedColor);
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('옵션 정보를 가져오는데 실패했습니다.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const options = data.options || [];
+                sizeSelect.innerHTML = '<option value="" selected disabled>사이즈를 선택해주세요</option>';
+
+                if (options.length === 0) {
+                    sizeSelect.innerHTML = '<option value="" selected disabled>선택 가능한 사이즈가 없습니다.</option>';
+                    sizeSelect.disabled = true;
+                    return;
+                }
+
+                // 사이즈 옵션들을 드롭다운에 추가
+                options.forEach(opt => {
+                    const optionElem = document.createElement('option');
+                    optionElem.value = opt.size;
+                    optionElem.dataset.optionId = opt.id;
+                    optionElem.dataset.stock = opt.stock_quantity;
+                    optionElem.dataset.extraPrice = opt.extra_price || 0;
+
+                    // 재고가 0인 경우 품절 표시 및 선택 불가(disabled) 처리
+                    if (opt.stock_quantity <= 0) {
+                        optionElem.textContent = `${opt.size} - [품절]`;
+                        optionElem.disabled = true;
+                        optionElem.className = 'text-danger';
+                    } else {
+                        optionElem.textContent = `${opt.size} (남은 재고: ${opt.stock_quantity}개)`;
+                    }
+
+                    sizeSelect.appendChild(optionElem);
+                });
+
+                sizeSelect.disabled = false;
+                stockNoticeText.textContent = '원하시는 사이즈를 선택해주세요.';
+                stockNoticeText.className = 'form-text small text-primary';
+            })
+            .catch(error => {
+                console.error('Error fetching sizes:', error);
+                sizeSelect.innerHTML = '<option value="" selected disabled>사이즈 정보를 불러올 수 없습니다.</option>';
+                stockNoticeText.textContent = '옵션을 불러오는 도중 오류가 발생했습니다.';
+                stockNoticeText.className = 'form-text small text-danger';
+            });
+    });
+
+    // 사이즈 선택 시 재고에 맞게 수량 max 속성 조정 및 option_id 저장
+    sizeSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        if (!selectedOption || !selectedOption.dataset.stock) return;
+
+        const stock = parseInt(selectedOption.dataset.stock, 10);
+        const optionId = selectedOption.dataset.optionId;
+        selectedOptionId.value = optionId || '';
+
+        if (stock <= 0) {
+            quantityInput.value = 0;
+            quantityInput.max = 0;
+            quantityInput.disabled = true;
+            addToCartBtn.disabled = true;
+            stockNoticeText.textContent = '선택하신 옵션은 현재 품절 상태입니다.';
+            stockNoticeText.className = 'form-text small text-danger fw-bold';
+            maxStockLabel.textContent = '(품절된 상품입니다)';
+        } else {
+            // 최대 수량: 10개와 실제 재고 중 작은 값으로 제한
+            const allowedMax = Math.min(10, stock);
+            quantityInput.disabled = false;
+            quantityInput.max = allowedMax;
+            if (parseInt(quantityInput.value, 10) > allowedMax) {
+                quantityInput.value = allowedMax;
+            }
+            addToCartBtn.disabled = false;
+            stockNoticeText.textContent = `현재 주문 가능한 재고는 ${stock}개입니다.`;
+            stockNoticeText.className = 'form-text small text-success';
+            maxStockLabel.textContent = `(최대 ${allowedMax}개까지 선택 가능)`;
+        }
+    });
+
+    // 수량 입력값 실시간 검증 (max 초과 방지)
+    quantityInput.addEventListener('input', function () {
+        const maxVal = parseInt(this.max, 10) || 10;
+        const currentVal = parseInt(this.value, 10);
+        if (currentVal > maxVal) {
+            this.value = maxVal;
+            alert(`선택하신 옵션의 최대 구매 가능 수량은 ${maxVal}개입니다.`);
+        } else if (currentVal < 1) {
+            this.value = 1;
+        }
+    });
+});
+</script>
+{% endblock %}

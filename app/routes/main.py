@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 import uuid
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
 from supabase_auth.errors import AuthApiError, AuthError
 from app.routes.auth import login_required, get_supabase_client
 
@@ -352,6 +352,147 @@ def index():
     index.html 템플릿에 전달하여 렌더링합니다.
     """
     return render_template('index.html', products=PRODUCTS)
+
+
+# ==============================================================================
+# 상품 상세 및 옵션 API 라우트
+# ==============================================================================
+
+@main_bp.route('/products/<int:product_id>')
+def product_detail(product_id):
+    """
+    [상품 상세 페이지] GET /products/<product_id>
+    - Supabase에서 product_id로 상품 정보 조회 (없을 경우 fallback)
+    - 상품 이미지, 이름, 가격(할인가/정가), 설명 표시
+    - product_options 테이블에서 해당 상품의 색상(color) 목록을 DISTINCT로 조회
+    """
+    supabase = get_supabase_client()
+    product_data = None
+    colors = []
+
+    # 1. Supabase에서 상품 정보 조회
+    try:
+        p_res = supabase.table("products").select("*, categories(name)").eq("id", product_id).execute()
+        if p_res.data:
+            sp = p_res.data[0]
+            cat_name = sp.get('categories', {}).get('name') if sp.get('categories') else 'FASHION'
+            
+            # 대표 이미지 조회
+            img_res = supabase.table("product_images").select("image_url").eq("product_id", product_id).order("display_order").limit(1).execute()
+            img_url = img_res.data[0]['image_url'] if img_res.data else None
+
+            # fallback 로컬 상품 정보
+            fallback = PRODUCT_DICT.get(product_id)
+
+            price_val = sp.get('sale_price') or sp.get('price') or (int(fallback['price'].replace(',', '')) if fallback else 0)
+            orig_price_val = sp.get('price') if sp.get('sale_price') else (int(fallback['original_price'].replace(',', '')) if (fallback and fallback.get('original_price')) else None)
+
+            product_data = {
+                "id": sp['id'],
+                "name": sp.get('name') or (fallback['name'] if fallback else '상품'),
+                "category": cat_name,
+                "badge": fallback.get('badge') if fallback else None,
+                "price": price_val,
+                "original_price": orig_price_val,
+                "description": sp.get('description') or (fallback['description'] if fallback else ''),
+                "image_url": img_url or (fallback['image'] if fallback else 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80')
+            }
+    except Exception as e:
+        import logging
+        logging.error(f"[Product Fetch Error] {e}")
+
+    # Supabase 조회가 실패하거나 데이터가 없을 때 로컬 마스터 데이터 활용
+    if not product_data:
+        fallback = PRODUCT_DICT.get(product_id)
+        if not fallback:
+            flash("존재하지 않는 상품입니다.", "danger")
+            return redirect(url_for('main.index'))
+
+        price_int = int(fallback['price'].replace(',', ''))
+        orig_price_int = int(fallback['original_price'].replace(',', '')) if fallback.get('original_price') else None
+
+        product_data = {
+            "id": fallback['id'],
+            "name": fallback['name'],
+            "category": fallback['category'],
+            "badge": fallback.get('badge'),
+            "price": price_int,
+            "original_price": orig_price_int,
+            "description": fallback.get('description', '') or fallback.get('sub_desc', ''),
+            "image_url": fallback['image']
+        }
+
+    # 2. product_options 테이블에서 해당 상품의 색상(color) 목록을 DISTINCT로 조회
+    try:
+        opt_res = supabase.table("product_options").select("color").eq("product_id", product_id).execute()
+        raw_colors = [r.get('color') for r in (opt_res.data or []) if r.get('color')]
+        # 순서 보존하면서 DISTINCT 처리
+        colors = list(dict.fromkeys(raw_colors))
+    except Exception as e:
+        import logging
+        logging.error(f"[Product Options Color Fetch Error] {e}")
+
+    # 옵션 색상이 없는 경우 기본 색상 제공
+    if not colors:
+        colors = ["기본"]
+
+    return render_template('product_detail.html', product=product_data, colors=colors)
+
+
+@main_bp.route('/api/products/<int:product_id>/options')
+def get_product_options(product_id):
+    """
+    [색상별 사이즈 목록 API] GET /api/products/<product_id>/options?color=...
+    - 색상 선택 시 해당 색상의 사이즈, 재고, 추가금액 목록 반환
+    """
+    selected_color = request.args.get('color', '').strip()
+    supabase = get_supabase_client()
+    options_list = []
+
+    try:
+        query = supabase.table("product_options").select("id, size, extra_price, stock_quantity, sku").eq("product_id", product_id)
+        if selected_color and selected_color != "기본":
+            query = query.eq("color", selected_color)
+        res = query.order("id").execute()
+        options_list = res.data or []
+    except Exception as e:
+        import logging
+        logging.error(f"[API Options Fetch Error] {e}")
+
+    # 데이터가 없을 때의 기본 fallback 사이즈
+    if not options_list:
+        options_list = [
+            {"id": 0, "size": "FREE", "extra_price": 0, "stock_quantity": 99, "sku": f"PROD-{product_id}-FREE"}
+        ]
+
+    return jsonify({"options": options_list})
+
+
+@main_bp.route('/cart/add-detailed/<int:product_id>', methods=['POST'])
+def add_to_cart_detailed(product_id):
+    """
+    상품 상세 페이지에서 색상, 사이즈, 수량을 지정하여 장바구니에 담기
+    """
+    color = request.form.get('color')
+    size = request.form.get('size')
+    quantity = int(request.form.get('quantity', 1))
+
+    if not color or not size:
+        flash("색상과 사이즈 옵션을 모두 선택해주세요.", "warning")
+        return redirect(url_for('main.product_detail', product_id=product_id))
+
+    product = PRODUCT_DICT.get(product_id)
+    prod_name = product['name'] if product else f"상품 #{product_id}"
+
+    # 장바구니 세션 업데이트
+    cart = session.get('cart', {})
+    pid_str = str(product_id)
+    cart[pid_str] = cart.get(pid_str, 0) + quantity
+    session['cart'] = cart
+    session.modified = True
+
+    flash(f"[{prod_name}] ({color} / {size}) {quantity}개가 장바구니에 담겼습니다!", "success")
+    return redirect(url_for('main.cart'))
 
 
 # ==============================================================================
