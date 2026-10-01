@@ -552,41 +552,43 @@ def add_to_cart_api():
                 "message": f"재고가 부족합니다(현재 {current_stock}개)"
             }), 400
 
-        # 4. 기존 carts 테이블 조회하여 동일 옵션 장바구니 품목 확인
+        # 4. 기존 carts 테이블 조회하여 동일 옵션 장바구니 품목 확인 및 누적 수량 계산
         cart_res = supabase.table("carts").select("id, quantity").eq("user_id", user_id).eq("option_id", product_option_id).execute()
         existing_cart_item = cart_res.data[0] if cart_res.data else None
 
+        current_cart_qty = existing_cart_item["quantity"] if existing_cart_item else 0
+        new_quantity = current_cart_qty + quantity
+
+        # 누적 후 수량이 재고를 초과하게 되는 경우 에러 처리 (DB에 쓰지 않음)
+        if new_quantity > current_stock:
+            return jsonify({
+                "success": False,
+                "message": f"재고가 부족합니다(현재 {current_stock}개)"
+            }), 400
+
+        # 5. carts 테이블에 upsert (같은 옵션이면 수량 누적, 없으면 새로 추가)
+        upsert_payload = {
+            "user_id": user_id,
+            "product_id": product_id,
+            "option_id": product_option_id,
+            "quantity": new_quantity
+        }
         if existing_cart_item:
-            # 기존 수량 누적
-            new_quantity = existing_cart_item["quantity"] + quantity
-            # 누적 후 수량이 재고를 초과하게 되는 경우 에러 처리
-            if new_quantity > current_stock:
-                return jsonify({
-                    "success": False,
-                    "message": f"재고가 부족합니다(현재 {current_stock}개)"
-                }), 400
+            upsert_payload["id"] = existing_cart_item["id"]
 
-            # 수량 업데이트
+        try:
+            # upsert: 이미 존재하면(같은 user_id + option_id) quantity 수정, 없으면 신규 생성
+            supabase.table("carts").upsert(
+                upsert_payload,
+                on_conflict="user_id,product_id,option_id"
+            ).execute()
+        except Exception:
+            # 만약 RLS나 on_conflict 컬럼 차이가 있을 경우 update/insert fallback
             try:
-                supabase.table("carts").update({"quantity": new_quantity}).eq("id", existing_cart_item["id"]).execute()
-            except Exception:
-                pass
-        else:
-            # 새 장바구니 아이템 추가 (누적 수량 = quantity)
-            if quantity > current_stock:
-                return jsonify({
-                    "success": False,
-                    "message": f"재고가 부족합니다(현재 {current_stock}개)"
-                }), 400
-
-            new_cart_payload = {
-                "user_id": user_id,
-                "product_id": product_id,
-                "option_id": product_option_id,
-                "quantity": quantity
-            }
-            try:
-                supabase.table("carts").insert(new_cart_payload).execute()
+                if existing_cart_item:
+                    supabase.table("carts").update({"quantity": new_quantity}).eq("id", existing_cart_item["id"]).execute()
+                else:
+                    supabase.table("carts").insert(upsert_payload).execute()
             except Exception:
                 pass
 
