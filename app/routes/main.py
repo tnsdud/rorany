@@ -381,56 +381,95 @@ def logout():
     return redirect(url_for('auth.logout'))
 
 
-@main_bp.route('/mypage')
+@main_bp.route('/mypage', methods=['GET', 'POST'])
 @login_required
 def mypage():
-    """마이페이지: 프로필, 주문 내역 및 상세 스냅샷, 환불 목록 표시"""
-    user = session.get('user')
+    """
+    [마이페이지]
+    - profiles 테이블에서 로그인 사용자 정보 조회하여 내 정보 표시
+    - 내 정보 수정 폼 처리 (POST)
+    - Bootstrap 5 nav-tabs 3개 (내 정보 / 주문 내역 / 환불 내역)
+    """
     user_id = session.get('user_id')
+    user = session.get('user') or {}
+    supabase = get_supabase_client()
 
-    orders = []
-    refunds = []
+    # POST 요청 시 내 정보 수정 처리
+    if request.method == 'POST':
+        new_name = request.form.get('name', '').strip()
+        new_phone = request.form.get('phone', '').strip()
+        new_address = request.form.get('address', '').strip()
+
+        try:
+            # 1. profiles 테이블 업데이트
+            update_data = {
+                "full_name": new_name,
+                "phone": new_phone
+            }
+            try:
+                supabase.table("profiles").update({**update_data, "address": new_address}).eq("id", user_id).execute()
+            except Exception:
+                supabase.table("profiles").update(update_data).eq("id", user_id).execute()
+
+            # 2. 세션 및 user_metadata 동기화
+            session['shipping_address'] = new_address
+            if 'user' in session:
+                session['user']['name'] = new_name
+            session.modified = True
+
+            access_token = session.get('access_token')
+            if access_token:
+                try:
+                    supabase.auth.set_session(access_token, session.get('refresh_token', ''))
+                    supabase.auth.update_user({
+                        "data": {
+                            "name": new_name,
+                            "full_name": new_name,
+                            "phone": new_phone,
+                            "address": new_address
+                        }
+                    })
+                except Exception:
+                    pass
+
+            flash("회원 정보가 성공적으로 수정되었습니다.", "success")
+            return redirect(url_for('main.mypage'))
+
+        except Exception as e:
+            flash(f"회원 정보 수정 중 오류가 발생했습니다: {e}", "danger")
+            return redirect(url_for('main.mypage'))
+
+    # GET 요청 시 profiles 테이블에서 정보 조회
+    profile = {
+        'id': user_id,
+        'email': user.get('email', ''),
+        'full_name': user.get('name', '고객'),
+        'phone': '',
+        'address': session.get('shipping_address') or '',
+        'grade': 'BRONZE',
+        'total_spent': 0
+    }
 
     try:
-        supabase = get_supabase_client()
-        # 1. 사용자의 주문 내역 조회 (최신순)
-        order_res = supabase.table("orders").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
-        raw_orders = order_res.data or []
-
-        if raw_orders:
-            order_ids = [o["id"] for o in raw_orders]
-            # 2. 각 주문의 상세 품목 스냅샷 조회
-            items_res = supabase.table("order_items").select("*").in_("order_id", order_ids).execute()
-            items_data = items_res.data or []
-
-            # 3. 각 주문의 환불 내역 조회
-            refunds_res = supabase.table("refunds").select("*").in_("order_id", order_ids).execute()
-            refunds_data = refunds_res.data or []
-            refunds = refunds_data
-
-            items_by_order = {}
-            for item in items_data:
-                oid = item.get("order_id")
-                items_by_order.setdefault(oid, []).append(item)
-
-            refund_by_order = {r.get("order_id"): r for r in refunds_data}
-
-            for o in raw_orders:
-                oid = o["id"]
-                o["items"] = items_by_order.get(oid, [])
-                o["refund"] = refund_by_order.get(oid)
-                orders.append(o)
-
+        profile_res = supabase.table("profiles").select("*").eq("id", user_id).execute()
+        if profile_res.data:
+            p = profile_res.data[0]
+            profile['full_name'] = p.get('full_name') or user.get('name', '고객')
+            profile['email'] = p.get('email') or user.get('email', '')
+            profile['phone'] = p.get('phone') or ''
+            if p.get('address'):
+                profile['address'] = p.get('address')
+            profile['grade'] = p.get('grade') or 'BRONZE'
+            profile['total_spent'] = p.get('total_spent', 0)
     except Exception as e:
         import logging
-        logging.error(f"[Mypage Order Fetch Error] {e}")
+        logging.error(f"[Mypage Profile Fetch Error] {e}")
 
     return render_template(
         'mypage.html',
         user=user,
-        cart_count=get_cart_count(),
-        orders=orders,
-        refunds=refunds
+        profile=profile,
+        cart_count=get_cart_count()
     )
 
 
