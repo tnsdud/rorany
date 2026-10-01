@@ -304,7 +304,7 @@ def confirm():
             session['user_id'] = user.id
             session['user'] = {
                 'id': user.id,
-                'email': user.email,
+                'email': user.email or '',
                 'name': display_name
             }
             if auth_session:
@@ -319,10 +319,15 @@ def confirm():
         else:
             return redirect(url_for('auth.login', error='verification_failed'))
 
-    except (AuthApiError, AuthError):
-        return redirect(url_for('auth.login', error='verification_expired'))
-    except Exception:
-        return redirect(url_for('auth.login', error='verification_failed'))
+    except (AuthApiError, AuthError) as e:
+        import logging
+        logging.error(f"[Auth Error] {e}")
+        error_msg = str(e)
+        return redirect(url_for('auth.login', error='auth_error', error_msg=error_msg))
+    except Exception as e:
+        import logging
+        logging.error(f"[Unexpected Confirm Error] {e}")
+        return redirect(url_for('auth.login', error='verification_failed', error_msg=str(e)))
 
 
 # ==============================================================================
