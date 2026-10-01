@@ -159,7 +159,9 @@ def login():
             session['user'] = {
                 'id': user.id,
                 'email': user.email,
-                'name': display_name
+                'name': display_name,
+                'provider': 'email',
+                'is_email_user': True
             }
             if auth_session:
                 session['access_token'] = auth_session.access_token
@@ -349,11 +351,17 @@ def confirm():
             user_metadata = getattr(user, 'user_metadata', {}) or {}
             display_name = user_metadata.get('name') or user_metadata.get('full_name') or (user.email.split('@')[0] if user.email else '고객')
 
+            app_metadata = getattr(user, 'app_metadata', {}) or {}
+            provider = app_metadata.get('provider') or ('email' if token_hash else 'oauth')
+            is_email = provider == 'email' or ('email' in app_metadata.get('providers', [])) or bool(token_hash)
+
             session['user_id'] = user.id
             session['user'] = {
                 'id': user.id,
                 'email': user.email or '',
-                'name': display_name
+                'name': display_name,
+                'provider': provider,
+                'is_email_user': is_email
             }
             if auth_session:
                 session['access_token'] = auth_session.access_token

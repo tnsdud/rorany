@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 import uuid
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from supabase_auth.errors import AuthApiError, AuthError
 from app.routes.auth import login_required, get_supabase_client
 
 # 'main'이라는 이름의 블루프린트 생성
@@ -465,12 +466,119 @@ def mypage():
         import logging
         logging.error(f"[Mypage Profile Fetch Error] {e}")
 
+    # 이메일/비밀번호 가입 여부 확인 (소셜 가입자 분기)
+    is_email_user = user.get('is_email_user')
+    if is_email_user is None:
+        access_token = session.get('access_token')
+        if access_token:
+            try:
+                user_res = supabase.auth.get_user(access_token)
+                if user_res and user_res.user:
+                    app_meta = getattr(user_res.user, 'app_metadata', {}) or {}
+                    provider = app_meta.get('provider')
+                    providers = app_meta.get('providers', [])
+                    identities = getattr(user_res.user, 'identities', []) or []
+                    id_providers = [getattr(i, 'provider', None) for i in identities]
+
+                    if 'email' in providers or provider == 'email' or 'email' in id_providers:
+                        is_email_user = True
+                    elif provider in ['kakao', 'azure', 'google', 'github'] or any(p in ['kakao', 'azure', 'google'] for p in providers):
+                        is_email_user = False
+            except Exception:
+                pass
+
+        if is_email_user is None:
+            provider = user.get('provider')
+            if provider in ['kakao', 'azure', 'google', 'github']:
+                is_email_user = False
+            else:
+                is_email_user = bool(user.get('email'))
+
+        if 'user' in session:
+            session['user']['is_email_user'] = is_email_user
+            session.modified = True
+
     return render_template(
         'mypage.html',
         user=user,
         profile=profile,
+        is_email_user=is_email_user,
         cart_count=get_cart_count()
     )
+
+
+@main_bp.route('/mypage/change-password', methods=['POST'])
+@login_required
+def change_password():
+    """
+    [POST /mypage/change-password]
+    - 기존 비밀번호 검증 (재로그인 방식으로 확인)
+    - 새 비밀번호는 Day 4 이메일 가입 때와 동일한 검증 조건 적용
+    - Supabase update_user_by_id() 사용
+    - 성공 시 "비밀번호가 변경되었습니다" 메시지 + /mypage로 새로고침
+    - 기존 비밀번호 불일치 시 "현재 비밀번호가 일치하지 않습니다"
+    - 새 비밀번호와 기존 비밀번호 동일 시 "새로운 비밀번호가 현재 비밀번호와 동일합니다"
+    """
+    user_id = session.get('user_id')
+    user = session.get('user') or {}
+    email = user.get('email')
+
+    current_password = request.form.get('current_password', '').strip()
+    new_password = request.form.get('new_password', '').strip()
+    confirm_password = request.form.get('confirm_password', '').strip()
+
+    if not current_password or not new_password or not confirm_password:
+        flash("모든 비밀번호 항목을 입력해주세요.", "danger")
+        return redirect(url_for('main.mypage'))
+
+    # 새 비밀번호와 기존 비밀번호 동일 시
+    if current_password == new_password:
+        flash("새로운 비밀번호가 현재 비밀번호와 동일합니다", "danger")
+        return redirect(url_for('main.mypage'))
+
+    # 새 비밀번호 확인 일치 검사
+    if new_password != confirm_password:
+        flash("새 비밀번호가 일치하지 않습니다.", "danger")
+        return redirect(url_for('main.mypage'))
+
+    # Day 4 이메일 가입 검증 조건 (최소 6자 이상)
+    if len(new_password) < 6:
+        flash("새 비밀번호는 6자리 이상이어야 합니다.", "danger")
+        return redirect(url_for('main.mypage'))
+
+    # 1. 기존 비밀번호 검증 (재로그인 방식으로 확인)
+    verify_client = get_supabase_client()
+    try:
+        sign_in_res = verify_client.auth.sign_in_with_password({
+            "email": email,
+            "password": current_password
+        })
+    except (AuthApiError, AuthError):
+        flash("현재 비밀번호가 일치하지 않습니다", "danger")
+        return redirect(url_for('main.mypage'))
+    except Exception:
+        flash("현재 비밀번호가 일치하지 않습니다", "danger")
+        return redirect(url_for('main.mypage'))
+
+    # 2. Supabase update_user_by_id() 사용
+    supabase = get_supabase_client()
+    try:
+        supabase.auth.admin.update_user_by_id(user_id, {"password": new_password})
+    except Exception:
+        try:
+            verify_client.auth.update_user({"password": new_password})
+        except Exception as e:
+            flash(f"비밀번호 변경 처리 중 오류가 발생했습니다: {e}", "danger")
+            return redirect(url_for('main.mypage'))
+
+    # 세션 토큰 갱신
+    if sign_in_res and sign_in_res.session:
+        session['access_token'] = sign_in_res.session.access_token
+        session['refresh_token'] = sign_in_res.session.refresh_token
+        session.modified = True
+
+    flash("비밀번호가 변경되었습니다", "success")
+    return redirect(url_for('main.mypage'))
 
 
 @main_bp.route('/checkout', methods=['POST'])
