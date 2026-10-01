@@ -60,6 +60,189 @@
                 </div>
             </div>
 
+            <!-- 주문 및 배송 내역 카드 (아코디언 및 상태 배지, 환불 신청) -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                    <div>
+                        <h5 class="fw-bold mb-1 d-flex align-items-center">
+                            <i class="bi bi-box-seam-fill me-2" style="color: #7c3aed;"></i>주문 내역
+                        </h5>
+                        <div class="text-muted small">최근 주문하신 내역과 배송 상태를 확인하실 수 있습니다.</div>
+                    </div>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">총 {{ orders|length }}건</span>
+                </div>
+
+                {% if orders %}
+                <div class="accordion accordion-flush" id="ordersAccordion">
+                    {% for order in orders %}
+                    <div class="accordion-item border rounded-3 mb-3 overflow-hidden shadow-sm">
+                        <h2 class="accordion-header" id="heading-{{ loop.index }}">
+                            <button class="accordion-button {% if not loop.first %}collapsed{% endif %} bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ loop.index }}" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="collapse-{{ loop.index }}">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center w-100 me-3">
+                                    <div class="text-start me-3">
+                                        <div class="fw-bold text-dark">{{ order.order_number }}</div>
+                                        <div class="text-muted small">
+                                            주문일시: {{ order.created_at[:10] }} {{ order.created_at[11:16] }}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="fw-bold fs-6" style="color: #7c3aed;">{{ "{:,}".format(order.final_amount) }}원</span>
+                                        <!-- 상태 배지 색상 -->
+                                        {% if order.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">결제대기</span>
+                                        {% elif order.status == 'paid' %}
+                                            <span class="badge bg-primary px-3 py-2 rounded-pill">결제완료</span>
+                                        {% elif order.status == 'preparing' %}
+                                            <span class="badge bg-info text-dark px-3 py-2 rounded-pill">상품준비중</span>
+                                        {% elif order.status == 'shipping' %}
+                                            <span class="badge bg-primary px-3 py-2 rounded-pill">배송중</span>
+                                        {% elif order.status == 'delivered' %}
+                                            <span class="badge bg-success px-3 py-2 rounded-pill">배송완료</span>
+                                        {% elif order.status == 'cancelled' %}
+                                            <span class="badge bg-secondary px-3 py-2 rounded-pill">주문취소</span>
+                                        {% elif order.status == 'refunded' %}
+                                            <span class="badge bg-danger px-3 py-2 rounded-pill">환불완료</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary px-3 py-2 rounded-pill">{{ order.status }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapse-{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" aria-labelledby="heading-{{ loop.index }}" data-bs-parent="#ordersAccordion">
+                            <div class="accordion-body bg-light-subtle p-4">
+                                <h6 class="fw-bold text-secondary small mb-3">주문 상품 정보 (스냅샷)</h6>
+                                <div class="table-responsive bg-white rounded-3 p-3 border mb-3">
+                                    <table class="table align-middle table-sm mb-0">
+                                        <thead class="table-light small text-secondary">
+                                            <tr>
+                                                <th>상품명</th>
+                                                <th>옵션 정보</th>
+                                                <th class="text-center">수량</th>
+                                                <th class="text-end">금액</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in order.items %}
+                                            <tr>
+                                                <td class="fw-semibold">{{ item.product_name }}</td>
+                                                <td class="small text-muted">{{ item.option_info or '-' }}</td>
+                                                <td class="text-center">{{ item.quantity }}개</td>
+                                                <td class="text-end fw-bold">{{ "{:,}".format(item.subtotal) }}원</td>
+                                            </tr>
+                                            {% else %}
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted small py-2">상세 품목 데이터가 없습니다.</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="row g-3 small text-secondary mb-3">
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-white rounded-3 border">
+                                            <div class="fw-bold text-dark mb-1">배송지 정보</div>
+                                            <div>받는 사람: {{ order.recipient_name }} ({{ order.recipient_phone }})</div>
+                                            <div>주소: {{ order.shipping_address }}</div>
+                                            {% if order.shipping_memo %}
+                                            <div class="text-muted mt-1">배송메모: {{ order.shipping_memo }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-white rounded-3 border">
+                                            <div class="fw-bold text-dark mb-1">결제 내역</div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>총 상품금액</span>
+                                                <span>{{ "{:,}".format(order.total_amount) }}원</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>배송비</span>
+                                                <span>{{ "{:,}".format(order.shipping_fee) }}원</span>
+                                            </div>
+                                            <hr class="my-1">
+                                            <div class="d-flex justify-content-between fw-bold text-dark">
+                                                <span>총 결제금액</span>
+                                                <span style="color: #7c3aed;">{{ "{:,}".format(order.final_amount) }}원</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 환불 상태 또는 환불 신청 버튼 노출 (배송완료 상태일 때만 노출) -->
+                                {% if order.status == 'delivered' %}
+                                <div class="d-flex justify-content-end align-items-center pt-2 border-top">
+                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#refundModal-{{ order.id }}">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>환불 신청
+                                    </button>
+                                </div>
+
+                                <!-- 환불 신청 모달 -->
+                                <div class="modal fade" id="refundModal-{{ order.id }}" tabindex="-1" aria-labelledby="refundModalLabel-{{ order.id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content rounded-4 border-0 shadow">
+                                            <form method="POST" action="{{ url_for('main.request_refund', order_id=order.id) }}">
+                                                <div class="modal-header border-bottom-0 pb-0">
+                                                    <h5 class="modal-title fw-bold text-danger" id="refundModalLabel-{{ order.id }}">
+                                                        <i class="bi bi-arrow-counterclockwise me-1"></i>환불 신청 접수
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body py-3">
+                                                    <div class="alert alert-secondary small mb-3">
+                                                        주문번호: <strong>{{ order.order_number }}</strong><br>
+                                                        환불 예정 금액: <strong class="text-danger">{{ "{:,}".format(order.final_amount) }}원</strong>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label for="refundReason-{{ order.id }}" class="form-label small fw-semibold">환불 사유 선택 또는 입력</label>
+                                                        <select class="form-select form-select-sm mb-2 rounded-3" onchange="document.getElementById('customReason-{{ order.id }}').value = this.value;">
+                                                            <option value="단순 변심 및 색상/사이즈 변경">단순 변심 및 색상/사이즈 변경</option>
+                                                            <option value="상품 불량 및 파손">상품 불량 및 파손</option>
+                                                            <option value="오배송 및 상품 오발송">오배송 및 상품 오발송</option>
+                                                            <option value="기타 사유 직접 입력">기타 사유 직접 입력</option>
+                                                        </select>
+                                                        <textarea class="form-control rounded-3 small" id="customReason-{{ order.id }}" name="reason" rows="3" placeholder="환불 사유를 상세히 입력해주세요.">단순 변심 및 색상/사이즈 변경</textarea>
+                                                    </div>
+                                                    <p class="small text-muted mb-0">
+                                                        * 환불 접수 시 관리자 확인 후 전액 환불 처리가 진행됩니다.
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer border-top-0 pt-0">
+                                                    <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">닫기</button>
+                                                    <button type="submit" class="btn btn-danger btn-sm rounded-pill px-4 fw-semibold">환불 요청하기</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% elif order.status == 'refunded' %}
+                                <div class="alert alert-danger small d-flex align-items-center mb-0 mt-2 py-2">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <div>
+                                        <strong>환불 완료:</strong> 본 주문은 환불 처리가 정상적으로 접수 및 완료되었습니다.
+                                        {% if order.refund and order.refund.reason %}
+                                        <span class="d-block text-muted mt-1">(사유: {{ order.refund.reason }})</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5 bg-light rounded-4">
+                    <i class="bi bi-bag-x fs-1 text-muted d-block mb-2"></i>
+                    <p class="text-secondary small mb-3">아직 주문하신 내역이 없습니다.</p>
+                    <a href="{{ url_for('main.index') }}#products" class="btn btn-outline-dark btn-sm rounded-pill px-4 py-2 fw-semibold">
+                        인기 상품 둘러보기
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
             <!-- 회원 탈퇴 영역 -->
             <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white border-top border-4 border-danger">
                 <h5 class="fw-bold text-danger mb-3 d-flex align-items-center">

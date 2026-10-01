@@ -1,5 +1,8 @@
+from datetime import datetime
+import os
+import uuid
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
-from app.routes.auth import login_required
+from app.routes.auth import login_required, get_supabase_client
 
 # 'main'이라는 이름의 블루프린트 생성
 # URL 프리픽스 없이 루트('/') 경로 등 메인 화면을 담당합니다.
@@ -381,9 +384,195 @@ def logout():
 @main_bp.route('/mypage')
 @login_required
 def mypage():
-    """마이페이지"""
+    """마이페이지: 프로필, 주문 내역 및 상세 스냅샷, 환불 목록 표시"""
     user = session.get('user')
-    return render_template('mypage.html', user=user, cart_count=get_cart_count())
+    user_id = session.get('user_id')
+
+    orders = []
+    refunds = []
+
+    try:
+        supabase = get_supabase_client()
+        # 1. 사용자의 주문 내역 조회 (최신순)
+        order_res = supabase.table("orders").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+        raw_orders = order_res.data or []
+
+        if raw_orders:
+            order_ids = [o["id"] for o in raw_orders]
+            # 2. 각 주문의 상세 품목 스냅샷 조회
+            items_res = supabase.table("order_items").select("*").in_("order_id", order_ids).execute()
+            items_data = items_res.data or []
+
+            # 3. 각 주문의 환불 내역 조회
+            refunds_res = supabase.table("refunds").select("*").in_("order_id", order_ids).execute()
+            refunds_data = refunds_res.data or []
+            refunds = refunds_data
+
+            items_by_order = {}
+            for item in items_data:
+                oid = item.get("order_id")
+                items_by_order.setdefault(oid, []).append(item)
+
+            refund_by_order = {r.get("order_id"): r for r in refunds_data}
+
+            for o in raw_orders:
+                oid = o["id"]
+                o["items"] = items_by_order.get(oid, [])
+                o["refund"] = refund_by_order.get(oid)
+                orders.append(o)
+
+    except Exception as e:
+        import logging
+        logging.error(f"[Mypage Order Fetch Error] {e}")
+
+    return render_template(
+        'mypage.html',
+        user=user,
+        cart_count=get_cart_count(),
+        orders=orders,
+        refunds=refunds
+    )
+
+
+@main_bp.route('/checkout', methods=['POST'])
+@login_required
+def checkout():
+    """
+    장바구니 상품을 기반으로 실제 주문(orders) 및 주문 품목(order_items) 스냅샷 생성
+    """
+    user_id = session.get('user_id')
+    user = session.get('user') or {}
+    raw_cart = session.get('cart', {})
+
+    if not raw_cart:
+        flash("장바구니가 비어 있어 주문을 진행할 수 없습니다.", "warning")
+        return redirect(url_for('main.cart'))
+
+    order_items_to_create = []
+    total_amount = 0
+
+    for pid_str, quantity in raw_cart.items():
+        try:
+            pid = int(pid_str)
+        except ValueError:
+            continue
+        product = PRODUCT_DICT.get(pid)
+        if product:
+            price_int = int(product['price'].replace(',', ''))
+            subtotal = price_int * quantity
+            total_amount += subtotal
+            order_items_to_create.append({
+                "product_id": product['id'],
+                "product_name": product['name'],
+                "option_info": product.get('sub_desc') or '기본 옵션',
+                "price": price_int,
+                "quantity": quantity,
+                "subtotal": subtotal
+            })
+
+    if not order_items_to_create:
+        flash("주문 가능한 상품이 없습니다.", "danger")
+        return redirect(url_for('main.cart'))
+
+    shipping_fee = 0 if total_amount >= 50000 else 3000
+    final_amount = total_amount + shipping_fee
+
+    order_number = f"ORD-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+    try:
+        supabase = get_supabase_client()
+        order_payload = {
+            "order_number": order_number,
+            "user_id": user_id,
+            "status": "paid",  # 즉시 결제 완료 상태로 생성
+            "total_amount": total_amount,
+            "discount_amount": 0,
+            "shipping_fee": shipping_fee,
+            "final_amount": final_amount,
+            "recipient_name": user.get('name') or '고객',
+            "recipient_phone": "010-1234-5678",
+            "shipping_address": "서울특별시 강남구 테헤란로 123 VIBE 빌딩 4층",
+            "shipping_memo": "배송 전 연락 바랍니다.",
+            "payment_method": "간편결제",
+            "paid_at": datetime.utcnow().isoformat()
+        }
+
+        order_insert_res = supabase.table("orders").insert(order_payload).execute()
+        if not order_insert_res.data:
+            flash("주문 생성 중 오류가 발생했습니다. 다시 시도해주세요.", "danger")
+            return redirect(url_for('main.cart'))
+
+        created_order = order_insert_res.data[0]
+        new_order_id = created_order["id"]
+
+        for item in order_items_to_create:
+            item["order_id"] = new_order_id
+
+        supabase.table("order_items").insert(order_items_to_create).execute()
+
+        # 장바구니 비우기
+        session.pop('cart', None)
+        session.modified = True
+
+        flash(f"주문이 성공적으로 완료되었습니다! (주문번호: {order_number})", "success")
+        return redirect(url_for('main.mypage'))
+
+    except Exception as e:
+        import logging
+        logging.error(f"[Checkout Error] {e}")
+        flash(f"주문 처리 중 오류가 발생했습니다: {e}", "danger")
+        return redirect(url_for('main.cart'))
+
+
+@main_bp.route('/orders/<order_id>/refund', methods=['POST'])
+@login_required
+def request_refund(order_id):
+    """
+    배송완료(delivered) 주문에 대해 환불 신청 생성 및 주문 상태를 refunded로 전환
+    """
+    user_id = session.get('user_id')
+    reason = request.form.get('reason', '고객 변심 및 상품 불만족').strip()
+
+    try:
+        supabase = get_supabase_client()
+        # 1. 해당 주문이 본인 주문이고 delivered 상태인지 확인
+        order_res = supabase.table("orders").select("*").eq("id", order_id).eq("user_id", user_id).execute()
+        if not order_res.data:
+            flash("주문 정보를 찾을 수 없습니다.", "danger")
+            return redirect(url_for('main.mypage'))
+
+        order = order_res.data[0]
+        if order.get("status") != "delivered":
+            flash("환불 신청은 배송 완료(delivered) 상태의 주문만 가능합니다.", "warning")
+            return redirect(url_for('main.mypage'))
+
+        # 2. 이미 환불 신청이 존재하는지 확인
+        refund_check = supabase.table("refunds").select("*").eq("order_id", order_id).execute()
+        if refund_check.data:
+            flash("이미 환불 처리가 접수된 주문입니다.", "info")
+            return redirect(url_for('main.mypage'))
+
+        # 3. refunds 레코드 생성
+        refund_payload = {
+            "order_id": order_id,
+            "user_id": user_id,
+            "status": "requested",
+            "reason": reason,
+            "refund_amount": order.get("final_amount", 0)
+        }
+        supabase.table("refunds").insert(refund_payload).execute()
+
+        # 4. orders 상태를 refunded로 업데이트
+        supabase.table("orders").update({"status": "refunded"}).eq("id", order_id).execute()
+
+        flash(f"주문({order.get('order_number')})에 대한 환불 신청이 정상적으로 접수되었습니다.", "success")
+
+    except Exception as e:
+        import logging
+        logging.error(f"[Refund Request Error] {e}")
+        flash(f"환불 신청 처리 중 오류가 발생했습니다: {e}", "danger")
+
+    return redirect(url_for('main.mypage'))
 
 
 @main_bp.route('/delete-account', methods=['POST'])

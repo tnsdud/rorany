@@ -127,9 +127,11 @@
                         {{ "{:,}".format(total_price + shipping) }}원
                     </span>
                 </div>
-                <button type="button" class="btn text-white w-100 py-3 fw-bold rounded-pill shadow-sm" style="background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);" onclick="alert('주문 결제 기능이 연동되었습니다.');">
-                    <i class="bi bi-credit-card me-2"></i>주문서 작성하기
-                </button>
+                <form method="POST" action="{{ url_for('main.checkout') }}">
+                    <button type="submit" class="btn text-white w-100 py-3 fw-bold rounded-pill shadow-sm" style="background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);">
+                        <i class="bi bi-credit-card me-2"></i>주문서 작성 및 결제하기
+                    </button>
+                </form>
                 <div class="small text-center text-muted mt-3">
                     50,000원 이상 구매 시 <strong>무료 배송</strong> 혜택!
                 </div>
