@@ -18,6 +18,21 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 # ==============================================================================
 # Supabase 클라이언트 초기화 헬퍼 함수
 # ==============================================================================
+def get_site_url() -> str:
+    """
+    사이트 기본 URL을 반환합니다.
+    환경변수 SITE_URL이 있으면 우선 사용하고, 없을 경우 현재 HTTP 요청의 호스트(HTTPS 여부 반영)를 감지합니다.
+    """
+    site_url = os.getenv("SITE_URL")
+    if site_url:
+        return site_url.rstrip('/')
+    try:
+        scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
+        return f"{scheme}://{request.host}".rstrip('/')
+    except Exception:
+        return "http://localhost:5000"
+
+
 def get_supabase_client() -> Client:
     """
     Supabase 클라이언트를 반환합니다.
@@ -116,8 +131,9 @@ def login():
             return redirect(url_for('auth.login', error='server_error'))
 
     error_code = request.args.get('error')
+    error_msg = request.args.get('error_msg')
     msg_code = request.args.get('msg')
-    return render_template('auth/login.html', error_code=error_code, msg_code=msg_code)
+    return render_template('auth/login.html', error_code=error_code, error_msg=error_msg, msg_code=msg_code)
 
 
 # ==============================================================================
@@ -146,7 +162,7 @@ def signup():
         if len(password) < 6:
             return redirect(url_for('auth.signup', error='password_too_short'))
 
-        site_url = os.getenv("SITE_URL", "http://localhost:5000").rstrip('/')
+        site_url = get_site_url()
         email_redirect_to = f"{site_url}/auth/confirm"
 
         try:
@@ -210,7 +226,10 @@ def confirm():
     error_desc = request.args.get('error_description') or request.args.get('error')
 
     if error_desc:
-        return redirect(url_for('auth.login', error='auth_error'))
+        error_desc_lower = error_desc.lower()
+        if 'expired' in error_desc_lower or 'invalid' in error_desc_lower or 'already' in error_desc_lower:
+            return redirect(url_for('auth.login', error='verification_expired'))
+        return redirect(url_for('auth.login', error='auth_error', error_msg=error_desc))
 
     try:
         supabase = get_supabase_client()
@@ -239,15 +258,31 @@ def confirm():
             <html>
             <head><meta charset="utf-8"><title>로그인 처리 중...</title></head>
             <body style="font-family:sans-serif; text-align:center; padding-top:60px;">
-                <p>카카오 로그인 인증을 완료하는 중입니다. 잠시만 기다려주세요...</p>
+                <p>인증을 처리하는 중입니다. 잠시만 기다려주세요...</p>
                 <script>
                     const hash = window.location.hash.substring(1);
                     if (hash) {
                         const params = new URLSearchParams(hash);
                         const at = params.get('access_token');
                         const rt = params.get('refresh_token') || '';
+                        const th = params.get('token_hash');
+                        const type = params.get('type') || 'signup';
+                        const code = params.get('code');
+                        const err = params.get('error_description') || params.get('error');
+
                         if (at) {
-                            window.location.replace('/auth/confirm?access_token=' + encodeURIComponent(at) + '&refresh_token=' + encodeURIComponent(rt));
+                            window.location.replace('/auth/confirm?access_token=' + encodeURIComponent(at) + '&refresh_token=' + encodeURIComponent(rt) + '&type=' + encodeURIComponent(type));
+                        } else if (th) {
+                            window.location.replace('/auth/confirm?token_hash=' + encodeURIComponent(th) + '&type=' + encodeURIComponent(type));
+                        } else if (code) {
+                            window.location.replace('/auth/confirm?code=' + encodeURIComponent(code));
+                        } else if (err) {
+                            const errLower = err.toLowerCase();
+                            if (errLower.includes('expired') || errLower.includes('invalid') || errLower.includes('already')) {
+                                window.location.replace('/auth/login?error=verification_expired');
+                            } else {
+                                window.location.replace('/auth/login?error=auth_error&error_msg=' + encodeURIComponent(err));
+                            }
                         } else {
                             window.location.replace('/auth/login?error=invalid_verification_link');
                         }
@@ -304,7 +339,7 @@ def forgot_password():
         if not email:
             return redirect(url_for('auth.forgot_password', error='empty_email'))
 
-        site_url = os.getenv("SITE_URL", "http://localhost:5000").rstrip('/')
+        site_url = get_site_url()
         redirect_to = f"{site_url}/auth/confirm"
 
         try:
@@ -389,7 +424,7 @@ def kakao():
     [7] 카카오 간편 로그인 처리
     Supabase OAuth 인증을 통해 카카오 로그인 동의 화면으로 리다이렉트합니다.
     """
-    site_url = os.getenv("SITE_URL", "http://localhost:5000").rstrip('/')
+    site_url = get_site_url()
     redirect_to = f"{site_url}/auth/confirm"
 
     try:
