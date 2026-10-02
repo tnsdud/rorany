@@ -14,10 +14,10 @@
     <!-- 커스텀 스타일시트 (static 폴더 연동) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
 </head>
-<body class="d-flex flex-column min-vh-100 bg-light">
+<body class="d-flex flex-column min-vh-100 bg-light{% if request.endpoint == 'main.index' %} home-page{% endif %}">
 
     <!-- 1. 네비게이션 바 (헤더) : 인라인 스타일로 보라색 바탕 적용 -->
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow py-3" style="background: linear-gradient(135deg, #4c1d95 0%, #6b21a8 50%, #581c87 100%) !important; border-bottom: 2px solid #a855f7;">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow py-3">
         <div class="container">
             <!-- 로고 및 브랜드명 -->
             <a class="navbar-brand fw-bold fs-4 tracking-wide text-white d-flex align-items-center" href="{{ url_for('main.index') }}" style="color: #ffffff !important;">
