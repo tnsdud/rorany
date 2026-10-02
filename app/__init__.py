@@ -22,7 +22,9 @@ def create_app():
     #    각 라우트(URL 경로)를 기능별로 분리 관리하기 위해 블루프린트를 등록합니다.
     from app.routes.main import main_bp
     from app.routes.auth import auth_bp
+    from app.routes.admin import admin_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
 
     return app

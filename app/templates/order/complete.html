@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}주문 완료 | VIBE-FASHION{% endblock %}
+
+{% block content %}
+<style>
+    /* 베이지 톤 배경 + 잎파리 패턴 */
+    body {
+        background-color: #f9f5f0;
+        background-image: 
+            radial-gradient(circle at 20% 80%, rgba(139, 128, 110, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(139, 128, 110, 0.08) 0%, transparent 50%);
+        background-attachment: fixed;
+    }
+
+    .order-complete-container {
+        background: 
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 10 Q60 30 50 50 Q40 30 50 10' fill='%23D4BBA8' opacity='0.06' /%3E%3Cpath d='M30 70 Q40 85 30 100 Q20 85 30 70' fill='%23D4BBA8' opacity='0.04' /%3E%3Cpath d='M80 60 Q90 75 80 90 Q70 75 80 60' fill='%23D4BBA8' opacity='0.05' /%3E%3C/svg%3E"),
+            linear-gradient(135deg, #f9f5f0 0%, #f3ede4 100%);
+        background-size: 300px 300px, 100% 100%;
+        background-attachment: scroll, fixed;
+    }
+
+    /* 카드 스타일 - 베이지 톤 */
+    .order-card {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid #e8dfd5 !important;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+
+    .order-card:hover {
+        box-shadow: 0 8px 24px rgba(139, 128, 110, 0.12) !important;
+        transform: translateY(-2px);
+    }
+
+    /* 성공 헤더 */
+    .order-header {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(244, 240, 235, 0.7));
+        backdrop-filter: blur(10px);
+        border-bottom: 2px solid #d4bba8;
+        padding: 3rem 2rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .order-header .bi-check-circle {
+        color: #8d7e6e;
+    }
+
+    /* 배지 스타일 */
+    .badge {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.875rem;
+        border-radius: 50px;
+        font-weight: 600;
+    }
+
+    /* 테이블 헤더 */
+    .table-light {
+        background-color: #ede7e0 !important;
+        color: #5e5450;
+    }
+
+    /* 테이블 행 */
+    .table tbody tr {
+        border-bottom-color: #e8dfd5;
+    }
+
+    /* 최종 결제금액 박스 */
+    .final-amount-box {
+        background: linear-gradient(135deg, #f0e8df 0%, #e8dfd5 100%) !important;
+        border: 2px solid #d4bba8 !important;
+        border-radius: 1rem;
+    }
+
+    /* 버튼 스타일 */
+    .btn-order-action {
+        background-color: #8d7e6e;
+        border-color: #8d7e6e;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-order-action:hover {
+        background-color: #6e6b61;
+        border-color: #6e6b61;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(139, 128, 110, 0.25);
+    }
+
+    /* 알림 박스 */
+    .alert-elegant {
+        background: linear-gradient(135deg, rgba(232, 223, 213, 0.3), rgba(212, 187, 168, 0.2));
+        border: 1px solid rgba(212, 187, 168, 0.5);
+        color: #5e5450;
+    }
+
+    /* 아이콘 색상 */
+    .bi-receipt, .bi-geo-alt-fill, .bi-bag-check {
+        color: #8d7e6e;
+    }
+
+    @media (max-width: 991px) {
+        .sticky-top {
+            position: static !important;
+        }
+    }
+</style>
+
+<div class="order-complete-container" style="min-height: 100vh; padding: 2rem 0;">
+    <div class="container py-5">
+        <!-- 성공 헤더 -->
+        <div class="order-header text-center">
+            <div class="mb-4">
+                <i class="bi bi-check-circle" style="font-size: 4rem;"></i>
+            </div>
+            <h2 class="fw-bold mb-2" style="color: #5e5450;">주문이 완료되었습니다!</h2>
+            <p class="text-muted" style="color: #8d7e6e;">감사합니다. 주문이 정상적으로 처리되었습니다.</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- 좌측: 주문 정보 -->
+            <div class="col-lg-7">
+                <!-- 주문 요약 -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 order-card mb-4">
+                <h5 class="fw-bold mb-4 pb-3 border-bottom">
+                    <i class="bi bi-receipt me-2"></i>주문 정보
+                </h5>
+                
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <div class="mb-3">
+                            <label class="small text-muted fw-semibold">주문번호</label>
+                            <div class="fw-bold text-dark" style="font-size: 0.95rem;">{{ order.order_number }}</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="mb-3">
+                            <label class="small text-muted fw-semibold">주문 상태</label>
+                            <div class="fw-bold">
+                                {% if order.status == 'paid' %}
+                                    <span class="badge bg-primary">결제완료</span>
+                                {% elif order.status == 'preparing' %}
+                                    <span class="badge bg-primary">상품준비중</span>
+                                {% elif order.status == 'shipped' %}
+                                    <span class="badge bg-info">배송중</span>
+                                {% elif order.status == 'delivered' %}
+                                    <span class="badge bg-success">배송완료</span>
+                                {% elif order.status == 'refund_requested' %}
+                                    <span class="badge bg-warning">환불신청됨</span>
+                                {% elif order.status == 'refunded' %}
+                                    <span class="badge bg-warning">환불완료</span>
+                                {% elif order.status == 'cancelled' %}
+                                    <span class="badge bg-secondary">주문취소</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ order.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="mb-3">
+                            <label class="small text-muted fw-semibold">주문일시</label>
+                            <div class="small text-dark">
+                                {{ order.created_at[:10] if order.created_at else '조회 불가' }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="mb-3">
+                            <label class="small text-muted fw-semibold">결제 수단</label>
+                            <div class="small text-dark">{{ order.payment_method or '없음' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 결제완료 상태 안내 문구 -->
+                {% if order.status == 'paid' %}
+                <div class="alert alert-info small mb-0 mt-3">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    상품 준비가 시작되면 마이페이지에서 배송 상태를 확인하실 수 있습니다.
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 배송지 정보 -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 order-card mb-4">
+                <h5 class="fw-bold mb-3 pb-3 border-bottom">
+                    <i class="bi bi-geo-alt-fill me-2"></i>배송지 정보
+                </h5>
+                
+                <div class="mb-3">
+                    <label class="small text-muted fw-semibold">수령인</label>
+                    <div class="small text-dark">{{ order.recipient_name }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="small text-muted fw-semibold">연락처</label>
+                    <div class="small text-dark">{{ order.recipient_phone }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="small text-muted fw-semibold">배송 주소</label>
+                    <div class="small text-dark">{{ order.shipping_address }}</div>
+                </div>
+                
+                {% if order.shipping_memo %}
+                <div>
+                    <label class="small text-muted fw-semibold">배송 메모</label>
+                    <div class="small text-dark">{{ order.shipping_memo }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 주문 상품 -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 order-card">
+                <h5 class="fw-bold mb-3 pb-3 border-bottom">
+                    <i class="bi bi-bag-check me-2"></i>주문 상품 (<span id="itemCount">{{ order_items|length }}</span>개)
+                </h5>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead class="table-light small">
+                            <tr>
+                                <th>상품명</th>
+                                <th class="text-center">수량</th>
+                                <th class="text-center">단가</th>
+                                <th class="text-end">소계</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order_items %}
+                            <tr>
+                                <td>
+                                    <div class="small fw-bold">{{ item.product_name }}</div>
+                                    <div class="small text-muted">{{ item.option_info }}</div>
+                                </td>
+                                <td class="text-center small">{{ item.quantity }}</td>
+                                <td class="text-center small">{{ "₩{:,}".format(item.price) }}</td>
+                                <td class="text-end small fw-bold">{{ "₩{:,}".format(item.subtotal) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 우측: 결제 정보 -->
+        <div class="col-lg-5">
+            <!-- 결제 요약 -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 order-card sticky-top" style="top: 20px;">
+                <h5 class="fw-bold mb-4">결제 정보</h5>
+                
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                    <span class="text-dark">상품 금액</span>
+                    <span class="fw-bold">{{ "₩{:,}".format(order.total_amount) }}</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                    <span class="text-dark">배송비</span>
+                    <span class="fw-bold">
+                        {% if order.shipping_fee == 0 %}
+                            <span class="badge bg-success-subtle text-success">무료</span>
+                        {% else %}
+                            {{ "₩{:,}".format(order.shipping_fee) }}
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-4 border-bottom">
+                    <span class="text-dark">할인 금액</span>
+                    <span class="fw-bold text-danger">-{{ "₩{:,}".format(order.discount_amount) }}</span>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-4" style="background: linear-gradient(135deg, #f0e8df 0%, #e8dfd5 100%); padding: 1rem; border-radius: 0.75rem; border: 2px solid #d4bba8;">
+                    <span class="fw-bold text-dark" style="color: #5e5450;">최종 결제금액</span>
+                    <span class="fw-bold" style="color: #8d7e6e; font-size: 1.5rem;">{{ "₩{:,}".format(order.final_amount) }}</span>
+                </div>
+
+                <!-- 다음 액션 버튼들 -->
+                <div class="d-grid gap-2 mb-3">
+                    <a href="{{ url_for('main.mypage') }}" class="btn btn-order-action rounded-pill fw-semibold py-3">
+                        <i class="bi bi-person-circle me-2"></i>마이페이지 (주문 내역 조회)
+                    </a>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary rounded-pill fw-semibold py-3" style="color: #8d7e6e; border-color: #d4bba8;">
+                        <i class="bi bi-house-heart me-2"></i>홈으로 돌아가기
+                    </a>
+                </div>
+
+                <!-- 안내 메시지 -->
+                <div class="alert alert-elegant small mt-4 mb-0">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>주문 안내</strong><br>
+                    주문 확인 후 준비 중 → 배송 중 → 배송 완료 순서로 진행됩니다. 마이페이지에서 주문 상태를 확인하실 수 있습니다.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

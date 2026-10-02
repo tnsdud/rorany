@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>주문 관리 | VIBE-FASHION ADMIN</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-layout">
+        <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="메뉴 닫기"></button>
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="관리자 메뉴">
+            <a class="brand" href="{{ url_for('admin.dashboard') }}" aria-label="VIBE-FASHION 관리자 대시보드"><span class="brand-mark"><i class="bi bi-bag-heart-fill" aria-hidden="true"></i></span><span class="brand-copy"><strong>VIBE-FASHION</strong><span>ADMIN</span></span></a>
+            <div class="sidebar-caption">WORKSPACE</div>
+            <nav class="sidebar-nav">
+                <a class="nav-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i><span>대시보드</span></a>
+                <a class="nav-item" href="{{ url_for('admin.products') }}"><i class="bi bi-box-seam" aria-hidden="true"></i><span>상품 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.inventory') }}"><i class="bi bi-archive" aria-hidden="true"></i><span>재고 관리</span></a>
+                <a class="nav-item is-active" href="{{ url_for('admin.orders') }}" aria-current="page"><i class="bi bi-receipt" aria-hidden="true"></i><span>주문 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.members') }}"><i class="bi bi-people" aria-hidden="true"></i><span>회원 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.returns') }}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>반품/교환 관리</span></a>
+            </nav>
+            <div class="sidebar-bottom"><div class="profile-card"><span class="profile-avatar" aria-hidden="true">관</span><span class="profile-copy"><strong>관리자</strong><small>쇼핑몰 운영자</small></span><a class="icon-button logout-button" href="{{ url_for('auth.logout') }}" aria-label="로그아웃"><i class="bi bi-box-arrow-right" aria-hidden="true"></i></a></div><span class="sidebar-version">VIBE-FASHION · ADMIN</span></div>
+        </aside>
+
+        <div class="admin-main">
+            <header class="topbar"><div class="topbar-leading"><button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="adminSidebar"><i class="bi bi-list" aria-hidden="true"></i></button><div class="page-heading"><span class="eyebrow">ORDER OPERATIONS</span><h1>주문 관리</h1></div></div><div class="topbar-actions"><button class="icon-button topbar-icon" type="button" aria-label="검색"><i class="bi bi-search" aria-hidden="true"></i></button><button class="icon-button topbar-icon notification-button" type="button" aria-label="알림"><i class="bi bi-bell" aria-hidden="true"></i><span class="notification-dot"></span></button><span class="topbar-divider" aria-hidden="true"></span><span class="topbar-admin-name">관리자</span><span class="topbar-avatar" aria-label="관리자 프로필"><i class="bi bi-person-fill" aria-hidden="true"></i></span></div></header>
+            <main class="dashboard-content orders-content">
+                <section class="welcome-row orders-welcome" aria-labelledby="ordersTitle"><div><p class="section-kicker">ORDER MANAGEMENT</p><h2 id="ordersTitle">주문 목록</h2><p class="welcome-copy">회원과 주문 상품을 확인하고 처리 상태를 관리합니다.</p></div><div class="date-chip"><i class="bi bi-calendar3" aria-hidden="true"></i><span>{{ today_label }}</span></div></section>
+                {% if data_error %}<div class="member-data-error" role="alert"><i class="bi bi-exclamation-circle" aria-hidden="true"></i><span>{{ data_error }}</span></div>{% endif %}
+                <section class="order-summary" aria-label="주문 현황"><article><span class="order-summary-icon order-summary-all"><i class="bi bi-receipt" aria-hidden="true"></i></span><div><span>전체 주문</span><strong id="orderTotal">0건</strong></div></article><article><span class="order-summary-icon order-summary-queue"><i class="bi bi-box-seam" aria-hidden="true"></i></span><div><span>처리 대기</span><strong id="orderPending">0건</strong></div></article><article><span class="order-summary-icon order-summary-shipping"><i class="bi bi-truck" aria-hidden="true"></i></span><div><span>배송 중</span><strong id="orderShipping">0건</strong></div></article><article><span class="order-summary-icon order-summary-done"><i class="bi bi-check2-circle" aria-hidden="true"></i></span><div><span>완료</span><strong id="orderCompleted">0건</strong></div></article></section>
+                <section class="dashboard-panel order-list-panel" aria-labelledby="orderListTitle">
+                    <div class="order-list-heading"><div><h3 id="orderListTitle">전체 주문 <span class="result-count" id="orderCount">0</span></h3><p>주문 상세에서 주문 회원과 상품 스냅샷을 확인할 수 있습니다.</p></div><label class="order-search"><i class="bi bi-search" aria-hidden="true"></i><input id="orderSearch" type="search" placeholder="주문번호, 회원, 상품 검색" autocomplete="off"><span class="visually-hidden">주문 검색</span></label></div>
+                    <div class="order-filters"><label class="order-filter"><span>주문상태</span><select id="orderStatusFilter"><option value="">전체 상태</option><option value="pending">결제 대기</option><option value="paid">결제 완료</option><option value="preparing">상품 준비</option><option value="shipping">배송 중</option><option value="delivered">배송 완료</option><option value="cancelled">취소</option><option value="refunded">환불</option></select><i class="bi bi-chevron-down" aria-hidden="true"></i></label><label class="order-filter"><span>정렬</span><select id="orderSort"><option value="newest">최신순</option><option value="oldest">오래된순</option><option value="amount-desc">금액 높은순</option><option value="amount-asc">금액 낮은순</option></select><i class="bi bi-chevron-down" aria-hidden="true"></i></label><button class="member-filter-reset" id="resetOrderFilters" type="button"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i><span>초기화</span></button></div>
+                    <div class="table-scroll order-table-scroll"><table class="admin-table order-admin-table"><thead><tr><th>주문번호</th><th>주문일</th><th>회원명</th><th>주문상품</th><th class="align-right">결제금액</th><th>상태</th><th class="align-right">관리</th></tr></thead><tbody id="orderTableBody"></tbody></table><div class="empty-products" id="emptyOrders" {% if orders %}hidden{% endif %}><span class="empty-icon"><i class="bi bi-receipt" aria-hidden="true"></i></span><strong>{% if data_error %}주문 목록을 표시할 수 없습니다.{% else %}주문 내역이 없습니다.{% endif %}</strong><span>{% if data_error %}연결 상태와 관리자 권한을 확인해 주세요.{% else %}새 주문이 접수되면 여기에 표시됩니다.{% endif %}</span></div></div>
+                    <div class="order-table-footer"><span id="orderResultLabel">0건 표시</span><nav class="pagination-controls" aria-label="주문 페이지"><button id="previousPage" type="button" aria-label="이전 페이지" disabled><i class="bi bi-chevron-left" aria-hidden="true"></i></button><span id="pageLabel">1 / 1</span><button id="nextPage" type="button" aria-label="다음 페이지" disabled><i class="bi bi-chevron-right" aria-hidden="true"></i></button></nav></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog class="admin-dialog order-detail-dialog" id="orderDetailDialog" aria-labelledby="orderDetailTitle"><div class="dialog-header"><div><span class="section-kicker">ORDER DETAIL</span><h2 id="orderDetailTitle">주문 상세</h2></div><button class="icon-button dialog-close" type="button" data-close-order aria-label="닫기"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div><div class="dialog-body order-detail-body" id="orderDetailBody"><div class="member-detail-loading"><span class="loading-spinner" aria-hidden="true"></span><span>주문 정보를 불러오는 중입니다.</span></div></div><div class="dialog-footer" id="orderDetailFooter"><button class="secondary-button" type="button" data-close-order>닫기</button></div></dialog>
+    <dialog class="admin-dialog confirm-dialog" id="orderConfirmDialog" aria-labelledby="orderConfirmTitle"><div class="confirm-content"><span class="confirm-icon"><i class="bi bi-arrow-repeat" aria-hidden="true"></i></span><h2 id="orderConfirmTitle">주문 상태 변경</h2><p id="orderConfirmMessage"></p></div><div class="dialog-footer"><button class="secondary-button" type="button" data-close-confirm>취소</button><button class="primary-button" id="confirmOrderStatus" type="button">변경하기</button></div></dialog>
+    <div class="toast-message" id="ordersToast" role="status" aria-live="polite"></div>
+    <script>
+        let orders = {{ orders | tojson }};
+        const detailUrlTemplate = {{ url_for('admin.order_detail', order_id='00000000-0000-0000-0000-000000000000') | tojson }};
+        const statusUrlTemplate = {{ url_for('admin.update_order_status', order_id='00000000-0000-0000-0000-000000000000') | tojson }};
+        const labels = { pending: '결제 대기', paid: '결제 완료', preparing: '상품 준비', shipping: '배송 중', delivered: '배송 완료', cancelled: '취소', refunded: '환불' };
+        const classes = { pending: 'status-preparing', paid: 'status-paid', preparing: 'status-preparing', shipping: 'status-shipping', delivered: 'status-delivered', cancelled: 'status-cancelled', refunded: 'status-cancelled' };
+        const allowedNext = { pending: [['paid', '결제 확인'], ['cancelled', '주문 취소']], paid: [['preparing', '상품 준비 시작'], ['cancelled', '주문 취소']], preparing: [['shipping', '배송 시작'], ['cancelled', '주문 취소']], shipping: [['delivered', '배송 완료']] };
+        const body = document.getElementById('orderTableBody');
+        const detailDialog = document.getElementById('orderDetailDialog');
+        const confirmDialog = document.getElementById('orderConfirmDialog');
+        let activeOrderId = null;
+        let pendingStatus = null;
+        let currentPage = 1;
+        let toastTimer;
+        const pageSize = 10;
+        function escapeHTML(value) { return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]); }
+        function money(value) { return `${Number(value || 0).toLocaleString('ko-KR')}원`; }
+        function date(value) { return value ? escapeHTML(String(value).slice(0, 16).replace('T', ' ').replaceAll('-', '.')) : '—'; }
+        function detailUrl(template, id) { return template.replace('00000000-0000-0000-0000-000000000000', encodeURIComponent(id)); }
+        function renderSummary() {
+            document.getElementById('orderTotal').textContent = `${orders.length.toLocaleString('ko-KR')}건`;
+            document.getElementById('orderPending').textContent = `${orders.filter((order) => ['pending', 'paid', 'preparing'].includes(order.status)).length.toLocaleString('ko-KR')}건`;
+            document.getElementById('orderShipping').textContent = `${orders.filter((order) => order.status === 'shipping').length.toLocaleString('ko-KR')}건`;
+            document.getElementById('orderCompleted').textContent = `${orders.filter((order) => order.status === 'delivered').length.toLocaleString('ko-KR')}건`;
+        }
+        function filteredOrders() {
+            const query = document.getElementById('orderSearch').value.trim().toLocaleLowerCase('ko-KR');
+            const status = document.getElementById('orderStatusFilter').value;
+            const sort = document.getElementById('orderSort').value;
+            const result = orders.filter((order) => `${order.order_number} ${order.member_name} ${order.member_email} ${order.product_summary}`.toLocaleLowerCase('ko-KR').includes(query) && (!status || order.status === status));
+            result.sort((first, second) => {
+                if (sort === 'amount-desc') return Number(second.final_amount || 0) - Number(first.final_amount || 0);
+                if (sort === 'amount-asc') return Number(first.final_amount || 0) - Number(second.final_amount || 0);
+                const order = String(first.created_at || '').localeCompare(String(second.created_at || ''));
+                return sort === 'oldest' ? order : -order;
+            });
+            return result;
+        }
+        function renderOrders() {
+            const filtered = filteredOrders();
+            const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+            currentPage = Math.min(currentPage, pageCount);
+            const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+            body.innerHTML = pageRows.map((order) => `<tr class="clickable-row" data-order-id="${escapeHTML(order.id)}" tabindex="0" aria-label="주문 ${escapeHTML(order.order_number)} 상세 보기"><td class="order-number">${escapeHTML(order.order_number)}</td><td class="muted-cell">${date(order.created_at)}</td><td><strong class="order-member-name">${escapeHTML(order.member_name)}</strong><small class="order-member-email">${escapeHTML(order.member_email || '')}</small></td><td class="product-cell">${escapeHTML(order.product_summary)}</td><td class="align-right amount-cell">${money(order.final_amount || order.total_amount)}</td><td><span class="status-badge ${classes[order.status] || 'status-cancelled'}">${escapeHTML(labels[order.status] || order.status)}</span></td><td class="align-right"><button class="order-open-button" type="button" aria-label="${escapeHTML(order.order_number)} 상세"><i class="bi bi-arrow-up-right-square" aria-hidden="true"></i></button></td></tr>`).join('');
+            document.getElementById('orderCount').textContent = filtered.length.toLocaleString('ko-KR');
+            document.getElementById('orderResultLabel').textContent = `${filtered.length.toLocaleString('ko-KR')}건 표시`;
+            document.getElementById('emptyOrders').hidden = filtered.length > 0;
+            document.getElementById('pageLabel').textContent = `${currentPage} / ${pageCount}`;
+            document.getElementById('previousPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= pageCount;
+        }
+        function showToast(message) { const toast = document.getElementById('ordersToast'); toast.textContent = message; toast.classList.add('is-visible'); window.clearTimeout(toastTimer); toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 2600); }
+        function actionMarkup(order) { return (allowedNext[order.status] || []).map(([status, label]) => `<button class="${status === 'cancelled' ? 'danger-button' : 'primary-button'} order-status-action" type="button" data-next-status="${status}"><i class="bi ${status === 'cancelled' ? 'bi-x-lg' : 'bi-arrow-right'}" aria-hidden="true"></i>${label}</button>`).join(''); }
+        async function openOrder(orderId) {
+            activeOrderId = orderId;
+            document.getElementById('orderDetailBody').innerHTML = '<div class="member-detail-loading"><span class="loading-spinner" aria-hidden="true"></span><span>주문 정보를 불러오는 중입니다.</span></div>';
+            document.getElementById('orderDetailFooter').innerHTML = '<button class="secondary-button" type="button" data-close-order>닫기</button>';
+            detailDialog.showModal();
+            try {
+                const response = await fetch(detailUrl(detailUrlTemplate, orderId), { headers: { Accept: 'application/json' } });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || '주문 상세를 불러오지 못했습니다.');
+                const order = data.order;
+                const member = data.member || {};
+                const items = data.items || [];
+                document.getElementById('orderDetailTitle').textContent = `${order.order_number} 주문 상세`;
+                document.getElementById('orderDetailBody').innerHTML = `<section class="order-detail-section"><h3><i class="bi bi-person" aria-hidden="true"></i>회원정보</h3><div class="order-detail-grid"><div><span>회원명</span><strong>${escapeHTML(member.full_name || order.recipient_name)}</strong></div><div><span>이메일</span><strong>${escapeHTML(member.email || '비회원 주문')}</strong></div><div><span>전화번호</span><strong>${escapeHTML(member.phone || order.recipient_phone)}</strong></div><div><span>회원등급</span><strong>${escapeHTML(member.grade || '비회원')}</strong></div></div></section><section class="order-detail-section"><h3><i class="bi bi-box-seam" aria-hidden="true"></i>주문 상품 <span>${items.length}개</span></h3><div class="order-detail-items">${items.length ? items.map((item) => `<article><div><strong>${escapeHTML(item.product_name)}</strong><span>${escapeHTML(item.option_info || '옵션 없음')} · 상품 ID ${escapeHTML(item.product_id || '삭제됨')} · 옵션 ID ${escapeHTML(item.option_id || '미지정')}</span></div><span>${Number(item.quantity)}개</span><strong>${money(item.subtotal)}</strong></article>`).join('') : '<p class="order-detail-empty">주문 상품 내역이 없습니다.</p>'}</div></section><section class="order-detail-section"><h3><i class="bi bi-truck" aria-hidden="true"></i>배송정보</h3><div class="order-detail-grid"><div><span>수령인</span><strong>${escapeHTML(order.recipient_name)}</strong></div><div><span>수령 전화번호</span><strong>${escapeHTML(order.recipient_phone)}</strong></div><div class="order-address"><span>배송 주소</span><strong>${escapeHTML(order.shipping_address)}</strong></div><div><span>배송 메모</span><strong>${escapeHTML(order.shipping_memo || '없음')}</strong></div></div></section><section class="order-detail-payment"><div><span>현재 상태</span><span class="status-badge ${classes[order.status] || 'status-cancelled'}">${escapeHTML(labels[order.status] || order.status)}</span></div><div><span>상품 금액</span><strong>${money(order.total_amount)}</strong></div><div><span>배송비</span><strong>${money(order.shipping_fee)}</strong></div><div class="order-total"><span>결제 금액</span><strong>${money(order.final_amount)}</strong></div></section>`;
+                document.getElementById('orderDetailFooter').innerHTML = `${actionMarkup(order)}<button class="secondary-button" type="button" data-close-order>닫기</button>`;
+            } catch (error) {
+                document.getElementById('orderDetailBody').innerHTML = `<div class="member-detail-error"><i class="bi bi-exclamation-circle" aria-hidden="true"></i><strong>${escapeHTML(error.message)}</strong></div>`;
+            }
+        }
+        body.addEventListener('click', (event) => { const row = event.target.closest('[data-order-id]'); if (row) openOrder(row.dataset.orderId); });
+        body.addEventListener('keydown', (event) => { if (!['Enter', ' '].includes(event.key)) return; const row = event.target.closest('[data-order-id]'); if (row && !event.target.closest('button')) { event.preventDefault(); openOrder(row.dataset.orderId); } });
+        document.getElementById('orderDetailFooter').addEventListener('click', (event) => {
+            const button = event.target.closest('[data-next-status]');
+            if (!button) return;
+            pendingStatus = button.dataset.nextStatus;
+            const order = orders.find((item) => item.id === activeOrderId);
+            const label = labels[pendingStatus];
+            document.getElementById('orderConfirmMessage').textContent = pendingStatus === 'cancelled' ? `${order.order_number} 주문을 취소할까요? 옵션 재고가 복구됩니다.` : `${order.order_number} 상태를 '${label}'(으)로 변경할까요?`;
+            confirmDialog.showModal();
+        });
+        document.getElementById('confirmOrderStatus').addEventListener('click', async (event) => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            try {
+                const response = await fetch(detailUrl(statusUrlTemplate, activeOrderId), { method: 'PATCH', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ status: pendingStatus }) });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || '주문 상태를 변경하지 못했습니다.');
+                const order = orders.find((item) => item.id === activeOrderId);
+                if (order) order.status = result.order.status;
+                renderSummary();
+                renderOrders();
+                confirmDialog.close();
+                showToast(`주문 상태를 '${labels[pendingStatus]}'(으)로 변경했습니다.`);
+                await openOrder(activeOrderId);
+            } catch (error) { showToast(error.message); }
+            finally { button.disabled = false; }
+        });
+        ['orderSearch', 'orderStatusFilter', 'orderSort'].forEach((id) => document.getElementById(id).addEventListener(id === 'orderSearch' ? 'input' : 'change', () => { currentPage = 1; renderOrders(); }));
+        document.getElementById('resetOrderFilters').addEventListener('click', () => { document.getElementById('orderSearch').value = ''; document.getElementById('orderStatusFilter').value = ''; document.getElementById('orderSort').value = 'newest'; currentPage = 1; renderOrders(); });
+        document.getElementById('previousPage').addEventListener('click', () => { currentPage -= 1; renderOrders(); });
+        document.getElementById('nextPage').addEventListener('click', () => { currentPage += 1; renderOrders(); });
+        document.querySelectorAll('[data-close-order]').forEach((button) => button.addEventListener('click', () => detailDialog.close()));
+        document.querySelectorAll('[data-close-confirm]').forEach((button) => button.addEventListener('click', () => confirmDialog.close()));
+        document.addEventListener('click', (event) => { if (event.target.matches('[data-close-order]')) detailDialog.close(); });
+        detailDialog.addEventListener('click', (event) => { if (event.target === detailDialog) detailDialog.close(); });
+        confirmDialog.addEventListener('click', (event) => { if (event.target === confirmDialog) confirmDialog.close(); });
+        const sidebar = document.getElementById('adminSidebar'); const menuToggle = document.getElementById('menuToggle'); const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+        function setSidebarOpen(isOpen) { sidebar.classList.toggle('is-open', isOpen); sidebarBackdrop.classList.toggle('is-visible', isOpen); menuToggle.setAttribute('aria-expanded', String(isOpen)); }
+        menuToggle.addEventListener('click', () => setSidebarOpen(!sidebar.classList.contains('is-open'))); sidebarBackdrop.addEventListener('click', () => setSidebarOpen(false)); document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
+        renderSummary(); renderOrders();
+        const requestedOrderId = new URLSearchParams(window.location.search).get('order');
+        if (requestedOrderId && orders.some((order) => order.id === requestedOrderId)) openOrder(requestedOrderId);
+    </script>
+</body>
+</html>

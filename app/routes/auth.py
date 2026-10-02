@@ -104,6 +104,24 @@ def get_supabase_client(use_session: bool = True) -> Client:
     return client
 
 
+def get_supabase_service_client() -> Client:
+    """
+    Service Role 키를 사용하는 Supabase 클라이언트를 반환합니다.
+    RLS 정책을 우회하여 서버 측에서 직접 DB 접근이 필요할 때 사용합니다.
+    (예: 재고 차감 등의 중요한 트랜잭션)
+    """
+    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    service_key = os.getenv("SUPABASE_SERVICE_KEY", "").strip()
+    
+    if not service_key:
+        # Service Key가 없으면 안내 메시지와 함께 None 반환
+        import logging
+        logging.warning("[get_supabase_service_client] SUPABASE_SERVICE_KEY 환경변수가 없습니다.")
+        return None
+    
+    return create_client(supabase_url, service_key)
+
+
 # ==============================================================================
 # 로그인 필수 데코레이터
 # ==============================================================================

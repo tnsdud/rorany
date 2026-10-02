@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>재고 관리 | VIBE-FASHION ADMIN</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-layout">
+        <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="메뉴 닫기"></button>
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="관리자 메뉴">
+            <a class="brand" href="{{ url_for('admin.dashboard') }}" aria-label="VIBE-FASHION 관리자 대시보드">
+                <span class="brand-mark"><i class="bi bi-bag-heart-fill" aria-hidden="true"></i></span>
+                <span class="brand-copy"><strong>VIBE-FASHION</strong><span>ADMIN</span></span>
+            </a>
+            <div class="sidebar-caption">WORKSPACE</div>
+            <nav class="sidebar-nav">
+                <a class="nav-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i><span>대시보드</span></a>
+                <a class="nav-item" href="{{ url_for('admin.products') }}"><i class="bi bi-box-seam" aria-hidden="true"></i><span>상품 관리</span></a>
+                <a class="nav-item is-active" href="{{ url_for('admin.inventory') }}" aria-current="page"><i class="bi bi-archive" aria-hidden="true"></i><span>재고 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.orders') }}"><i class="bi bi-receipt" aria-hidden="true"></i><span>주문 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.members') }}"><i class="bi bi-people" aria-hidden="true"></i><span>회원 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.returns') }}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>반품/교환 관리</span></a>
+            </nav>
+            <div class="sidebar-bottom">
+                <div class="profile-card">
+                    <span class="profile-avatar" aria-hidden="true">관</span>
+                    <span class="profile-copy"><strong>관리자</strong><small>쇼핑몰 운영자</small></span>
+                    <a class="icon-button logout-button" href="{{ url_for('auth.logout') }}" aria-label="로그아웃"><i class="bi bi-box-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <span class="sidebar-version">VIBE-FASHION · ADMIN</span>
+            </div>
+        </aside>
+
+        <div class="admin-main">
+            <header class="topbar">
+                <div class="topbar-leading">
+                    <button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="adminSidebar"><i class="bi bi-list" aria-hidden="true"></i></button>
+                    <div class="page-heading"><span class="eyebrow">INVENTORY</span><h1>재고 관리</h1></div>
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-button topbar-icon" type="button" aria-label="검색"><i class="bi bi-search" aria-hidden="true"></i></button>
+                    <button class="icon-button topbar-icon notification-button" type="button" aria-label="알림"><i class="bi bi-bell" aria-hidden="true"></i><span class="notification-dot"></span></button>
+                    <span class="topbar-divider" aria-hidden="true"></span><span class="topbar-admin-name">관리자</span>
+                    <span class="topbar-avatar" aria-label="관리자 프로필"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
+                </div>
+            </header>
+
+            <main class="dashboard-content inventory-content">
+                {% if data_error %}<div class="member-data-error" role="alert"><i class="bi bi-exclamation-circle" aria-hidden="true"></i><span>{{ data_error }}</span></div>{% endif %}
+                <section class="welcome-row inventory-welcome" aria-labelledby="inventoryTitle">
+                    <div><p class="section-kicker">STOCK OVERVIEW</p><h2 id="inventoryTitle">재고 현황</h2><p class="welcome-copy">상품별 현재 재고와 변동 이력을 관리하세요.</p></div>
+                    <div class="date-chip"><i class="bi bi-calendar3" aria-hidden="true"></i><span>{{ today_label }}</span></div>
+                </section>
+
+                <section class="inventory-summary" aria-label="재고 요약">
+                    <article class="inventory-stat-card"><span class="inventory-stat-icon inv-icon-total"><i class="bi bi-boxes" aria-hidden="true"></i></span><div><span>전체 상품</span><strong id="totalProducts">0</strong></div></article>
+                    <article class="inventory-stat-card"><span class="inventory-stat-icon inv-icon-normal"><i class="bi bi-check2-circle" aria-hidden="true"></i></span><div><span>정상 재고</span><strong id="normalProducts">0</strong></div></article>
+                    <article class="inventory-stat-card"><span class="inventory-stat-icon inv-icon-low"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span><div><span>재고 부족</span><strong id="lowProducts">0</strong></div></article>
+                    <article class="inventory-stat-card"><span class="inventory-stat-icon inv-icon-out"><i class="bi bi-x-circle" aria-hidden="true"></i></span><div><span>품절</span><strong id="outProducts">0</strong></div></article>
+                </section>
+
+                <section class="dashboard-panel inventory-list-panel" aria-labelledby="inventoryListTitle">
+                    <div class="inventory-panel-heading">
+                        <div><h3 id="inventoryListTitle">재고 목록 <span id="inventoryRowCount" class="result-count">0</span></h3><p>안전재고 이하 상품은 재고 부족으로 표시됩니다.</p></div>
+                        <label class="inventory-search"><i class="bi bi-search" aria-hidden="true"></i><input id="inventorySearch" type="search" placeholder="상품명 또는 SKU 검색" autocomplete="off"><span class="visually-hidden">상품 검색</span></label>
+                    </div>
+                    <div class="table-scroll inventory-table-scroll">
+                        <table class="admin-table inventory-table">
+                            <thead><tr><th>상품</th><th>옵션</th><th>SKU</th><th class="align-right">현재 재고</th><th class="align-right">안전재고</th><th>재고 상태</th><th>최근 입고</th><th>최근 출고</th><th class="inventory-actions-heading">관리</th></tr></thead>
+                            <tbody id="inventoryTableBody"></tbody>
+                        </table>
+                        <div class="empty-products" id="emptyInventory" hidden><span class="empty-icon"><i class="bi bi-search" aria-hidden="true"></i></span><strong>상품을 찾을 수 없습니다.</strong><span>검색어를 변경해 보세요.</span></div>
+                    </div>
+                    <div class="inventory-table-footer"><span>상품 옵션 재고와 주문 데이터가 실시간 연결됩니다.</span><span><i class="bi bi-shield-check" aria-hidden="true"></i>저장된 재고 원장</span></div>
+                </section>
+
+                <section class="dashboard-panel inventory-history-panel" id="inventoryHistorySection" aria-labelledby="inventoryHistoryTitle">
+                    <div class="inventory-panel-heading history-heading">
+                        <div><h3 id="inventoryHistoryTitle">재고 이력</h3><p id="historyDescription">최근 재고 변동 내역</p></div>
+                        <label class="history-filter"><span class="visually-hidden">이력 상품 필터</span><select id="historyProductFilter"><option value="">전체 상품 이력</option></select><i class="bi bi-chevron-down" aria-hidden="true"></i></label>
+                    </div>
+                    <div class="table-scroll inventory-table-scroll">
+                        <table class="admin-table history-table">
+                            <thead><tr><th>날짜</th><th>상품</th><th>유형</th><th class="align-right">수량</th><th>사유</th><th>처리자</th></tr></thead>
+                            <tbody id="historyTableBody"></tbody>
+                        </table>
+                        <div class="empty-products" id="emptyHistory" hidden><span class="empty-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></span><strong>재고 이력이 없습니다.</strong><span>재고 조정 후 이력이 여기에 표시됩니다.</span></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog class="admin-dialog inventory-adjust-dialog" id="inventoryAdjustDialog" aria-labelledby="adjustDialogTitle">
+        <form id="inventoryAdjustForm" class="dialog-form">
+            <div class="dialog-header"><div><span class="section-kicker">STOCK ADJUSTMENT</span><h2 id="adjustDialogTitle">재고 조정</h2></div><button class="icon-button dialog-close" type="button" data-close-dialog aria-label="닫기"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div>
+            <div class="dialog-body">
+                <div class="adjust-product-summary"><span class="adjust-product-icon"><i class="bi bi-box-seam" aria-hidden="true"></i></span><div><strong id="adjustProductName"></strong><span id="adjustProductMeta"></span></div><div class="adjust-current-stock"><small>현재 재고</small><strong id="adjustCurrentStock">0개</strong></div></div>
+                <input type="hidden" name="product_id">
+                <fieldset class="direction-field"><legend>재고 변경 방향 <b>*</b></legend><div class="direction-control"><label><input type="radio" name="direction" value="increase" checked><span><i class="bi bi-plus-lg" aria-hidden="true"></i>증가</span></label><label><input type="radio" name="direction" value="decrease"><span><i class="bi bi-dash-lg" aria-hidden="true"></i>감소</span></label></div></fieldset>
+                <div class="form-grid adjust-form-grid">
+                    <label class="form-field span-2"><span>상품 옵션 <b>*</b></span><select name="option_id" required></select></label>
+                    <label class="form-field"><span>변경 수량 <b>*</b></span><span class="input-suffix"><input name="quantity" type="number" min="1" step="1" required placeholder="변경할 수량"><i>개</i></span></label>
+                    <label class="form-field"><span>조정 사유 <b>*</b></span><select name="reason" required></select></label>
+                    <p class="form-error span-2" id="adjustError" role="alert" hidden></p>
+                </div>
+            </div>
+            <div class="dialog-footer"><button class="secondary-button" type="button" data-close-dialog>취소</button><button class="primary-button" type="submit"><i class="bi bi-check2" aria-hidden="true"></i>저장하기</button></div>
+        </form>
+    </dialog>
+    <div class="toast-message" id="inventoryToast" role="status" aria-live="polite"></div>
+
+    <script>
+        const productsApi = {{ url_for('admin.create_product') | tojson }};
+        const adjustApiTemplate = {{ url_for('admin.adjust_inventory', option_id=0) | tojson }};
+        const initialProducts = {{ products | tojson }};
+        const initialHistory = {{ inventory_history | tojson }};
+        let products = initialProducts;
+        let history = initialHistory;
+        const tableBody = document.getElementById('inventoryTableBody');
+        const historyBody = document.getElementById('historyTableBody');
+        const adjustDialog = document.getElementById('inventoryAdjustDialog');
+        const adjustForm = document.getElementById('inventoryAdjustForm');
+        const adjustError = document.getElementById('adjustError');
+        let toastTimer;
+
+        async function refreshProducts() {
+            const response = await fetch(productsApi, { headers: { Accept: 'application/json' } });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || '상품 재고를 새로 불러오지 못했습니다.');
+            products = result.products;
+        }
+
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+        }
+
+        function stockState(product) {
+            if (Number(product.stock) === 0) return 'out';
+            return Number(product.stock) <= Number(product.safe_stock) ? 'low' : 'normal';
+        }
+
+        function stockBadge(product) {
+            const state = stockState(product);
+            const label = state === 'out' ? '품절' : state === 'low' ? '재고 부족' : '정상';
+            return `<span class="inventory-state state-${state}"><i></i>${label}</span>`;
+        }
+
+        function latestMovement(productId, isInbound) {
+            return history.find((movement) => String(movement.product_id) === String(productId) && (isInbound ? movement.quantity > 0 : movement.quantity < 0));
+        }
+
+        function formatMovementDate(movement) {
+            return movement ? escapeHTML(movement.date.slice(5)) : '—';
+        }
+
+        function renderSummary() {
+            const counts = products.reduce((summary, product) => {
+                summary[stockState(product)] += 1;
+                return summary;
+            }, { normal: 0, low: 0, out: 0 });
+            document.getElementById('totalProducts').textContent = `${products.length}개`;
+            document.getElementById('normalProducts').textContent = `${counts.normal}개`;
+            document.getElementById('lowProducts').textContent = `${counts.low}개`;
+            document.getElementById('outProducts').textContent = `${counts.out}개`;
+        }
+
+        function renderInventory() {
+            const query = document.getElementById('inventorySearch').value.trim().toLocaleLowerCase('ko-KR');
+            const visibleProducts = products.filter((product) => `${product.name} ${product.code} ${product.options}`.toLocaleLowerCase('ko-KR').includes(query));
+            tableBody.innerHTML = visibleProducts.map((product) => {
+                const image = String(product.image || '').startsWith('https://') ? product.image : '';
+                const inbound = latestMovement(product.id, true);
+                const outbound = latestMovement(product.id, false);
+                return `<tr>
+                    <td><div class="inventory-product-cell"><span class="inventory-thumb">${image ? `<img src="${escapeHTML(image)}" alt="" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">` : ''}<i class="bi bi-image" ${image ? 'hidden' : ''} aria-hidden="true"></i></span><strong>${escapeHTML(product.name)}</strong></div></td>
+                    <td class="inventory-option-cell">${escapeHTML(product.options)}</td>
+                    <td><span class="code-cell">${escapeHTML(product.code)}</span></td>
+                    <td class="align-right inventory-number">${Number(product.stock).toLocaleString('ko-KR')}개</td>
+                    <td class="align-right inventory-safe-stock">${Number(product.safe_stock).toLocaleString('ko-KR')}개</td>
+                    <td>${stockBadge(product)}</td>
+                    <td class="movement-date"><span>${formatMovementDate(inbound)}</span>${inbound ? `<small>+${Number(inbound.quantity).toLocaleString('ko-KR')}</small>` : ''}</td>
+                    <td class="movement-date"><span>${formatMovementDate(outbound)}</span>${outbound ? `<small>${Number(outbound.quantity).toLocaleString('ko-KR')}</small>` : ''}</td>
+                    <td><div class="inventory-row-actions"><button class="inventory-adjust-button" type="button" data-action="adjust" data-id="${escapeHTML(product.id)}"><i class="bi bi-sliders" aria-hidden="true"></i>재고 조정</button><button class="inventory-history-button" type="button" data-action="history" data-id="${escapeHTML(product.id)}" title="${escapeHTML(product.name)} 이력" aria-label="${escapeHTML(product.name)} 이력"><i class="bi bi-clock-history" aria-hidden="true"></i></button></div></td>
+                </tr>`;
+            }).join('');
+            document.getElementById('inventoryRowCount').textContent = `${visibleProducts.length}`;
+            document.getElementById('emptyInventory').hidden = visibleProducts.length > 0;
+            renderSummary();
+        }
+
+        function updateHistoryFilter() {
+            const filter = document.getElementById('historyProductFilter');
+            const selected = filter.value;
+            filter.replaceChildren(new Option('전체 상품 이력', ''));
+            products.forEach((product) => filter.add(new Option(product.name, product.id)));
+            filter.value = selected;
+        }
+
+        function renderHistory() {
+            const selectedId = document.getElementById('historyProductFilter').value;
+            const orderedHistory = [...history].sort((first, second) => second.date.localeCompare(first.date));
+            const entries = orderedHistory.filter((movement) => !selectedId || movement.product_id === selectedId);
+            const productById = new Map(products.map((product) => [String(product.id), product]));
+            historyBody.innerHTML = entries.map((movement) => {
+                const product = productById.get(String(movement.product_id));
+                const typeClass = movement.quantity > 0 ? 'inbound' : movement.type === '주문 출고' ? 'order-outbound' : 'adjustment';
+                return `<tr><td class="history-date">${escapeHTML(movement.date)}</td><td class="history-product">${escapeHTML(product ? product.name : '삭제된 상품')}</td><td><span class="movement-type type-${typeClass}">${escapeHTML(movement.type)}</span></td><td class="align-right movement-quantity ${movement.quantity > 0 ? 'quantity-in' : 'quantity-out'}">${movement.quantity > 0 ? '+' : ''}${Number(movement.quantity).toLocaleString('ko-KR')}개</td><td class="history-reason">${escapeHTML(movement.reason)}</td><td class="history-operator">${escapeHTML(movement.operator)}</td></tr>`;
+            }).join('');
+            document.getElementById('emptyHistory').hidden = entries.length > 0;
+            document.getElementById('historyDescription').textContent = selectedId ? `${entries.length}건의 상품별 재고 변동 내역` : `최근 재고 변동 ${entries.length}건`;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('inventoryToast');
+            toast.textContent = message;
+            toast.classList.add('is-visible');
+            window.clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 2600);
+        }
+
+        function updateReasonOptions() {
+            const direction = adjustForm.elements.direction.value;
+            const reasonSelect = adjustForm.elements.reason;
+            const reasons = direction === 'increase'
+                ? [['상품 입고', '상품 입고'], ['반품 입고', '반품 입고'], ['재고 실사 보정', '재고 실사 보정'], ['기타', '기타']]
+                : [['주문 출고', '주문 출고'], ['파손/분실', '파손/분실'], ['재고 실사 보정', '재고 실사 보정'], ['기타', '기타']];
+            reasonSelect.replaceChildren(...reasons.map(([value, label]) => new Option(label, value)));
+        }
+
+        function openAdjustment(product) {
+            adjustForm.reset();
+            adjustError.hidden = true;
+            adjustForm.elements.product_id.value = product.id;
+            document.getElementById('adjustProductName').textContent = product.name;
+            document.getElementById('adjustProductMeta').textContent = `${product.code} · ${product.options}`;
+            document.getElementById('adjustCurrentStock').textContent = `${Number(product.stock).toLocaleString('ko-KR')}개`;
+            const optionSelect = adjustForm.elements.option_id;
+            optionSelect.replaceChildren(...(product.option_rows || []).map((option) => {
+                const label = [option.color, option.size, option.sku].filter(Boolean).join(' / ');
+                return new Option(`${label || `옵션 #${option.id}`} · 현재 ${Number(option.stock_quantity || 0)}개`, option.id);
+            }));
+            optionSelect.disabled = !product.option_rows?.length;
+            adjustForm.querySelector('[type="submit"]').disabled = !product.option_rows?.length;
+            updateReasonOptions();
+            adjustDialog.showModal();
+            adjustForm.elements.option_id.focus();
+        }
+
+        document.getElementById('inventorySearch').addEventListener('input', renderInventory);
+        document.getElementById('historyProductFilter').addEventListener('change', renderHistory);
+        adjustForm.querySelectorAll('[name="direction"]').forEach((input) => input.addEventListener('change', updateReasonOptions));
+
+        tableBody.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-action]');
+            if (!button) return;
+            const product = products.find((item) => item.id === button.dataset.id);
+            if (!product) return;
+            if (button.dataset.action === 'adjust') openAdjustment(product);
+            if (button.dataset.action === 'history') {
+                document.getElementById('historyProductFilter').value = product.id;
+                renderHistory();
+                document.getElementById('inventoryHistorySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
+        adjustForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            adjustError.hidden = true;
+            if (!adjustForm.reportValidity()) return;
+            const productId = adjustForm.elements.product_id.value;
+            const product = products.find((item) => String(item.id) === productId);
+            const quantity = Number(adjustForm.elements.quantity.value);
+            const direction = adjustForm.elements.direction.value;
+            const delta = direction === 'increase' ? quantity : -quantity;
+            const selectedOption = product.option_rows.find((option) => String(option.id) === adjustForm.elements.option_id.value);
+            const newStock = Number(selectedOption?.stock_quantity || 0) + delta;
+            if (!Number.isInteger(quantity) || quantity < 1) {
+                adjustError.textContent = '변경 수량은 1개 이상 입력해 주세요.';
+                adjustError.hidden = false;
+                return;
+            }
+            if (!selectedOption) {
+                adjustError.textContent = '재고 옵션을 선택해 주세요.';
+                adjustError.hidden = false;
+                return;
+            }
+            if (newStock < 0) {
+                adjustError.textContent = `현재 재고보다 많이 감소할 수 없습니다. (현재 재고: ${selectedOption.stock_quantity}개)`;
+                adjustError.hidden = false;
+                return;
+            }
+
+            const reason = adjustForm.elements.reason.value;
+            const type = delta > 0 ? (reason === '반품 입고' ? '반품 입고' : '입고') : reason === '주문 출고' ? '주문 출고' : '재고 조정';
+            const submitButton = adjustForm.querySelector('[type="submit"]');
+            submitButton.disabled = true;
+            try {
+                const url = adjustApiTemplate.replace('/0/adjust', `/${encodeURIComponent(selectedOption.id)}/adjust`);
+                const response = await fetch(url, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    body: JSON.stringify({ delta, reason }),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || '재고를 변경하지 못했습니다.');
+                products = result.products;
+                history.unshift(result.movement);
+                updateHistoryFilter();
+                renderInventory();
+                renderHistory();
+                adjustDialog.close();
+                showToast(`${product.name} 재고가 ${delta > 0 ? '증가' : '감소'}했습니다.`);
+            } catch (error) {
+                adjustError.textContent = error.message;
+                adjustError.hidden = false;
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+
+        document.querySelectorAll('[data-close-dialog]').forEach((button) => button.addEventListener('click', () => button.closest('dialog').close()));
+        adjustDialog.addEventListener('click', (event) => { if (event.target === adjustDialog) adjustDialog.close(); });
+
+        const sidebar = document.getElementById('adminSidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+        function setSidebarOpen(isOpen) {
+            sidebar.classList.toggle('is-open', isOpen);
+            sidebarBackdrop.classList.toggle('is-visible', isOpen);
+            menuToggle.setAttribute('aria-expanded', String(isOpen));
+        }
+        menuToggle.addEventListener('click', () => setSidebarOpen(!sidebar.classList.contains('is-open')));
+        sidebarBackdrop.addEventListener('click', () => setSidebarOpen(false));
+        document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
+
+        updateHistoryFilter();
+        renderInventory();
+        renderHistory();
+    </script>
+</body>
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>반품/교환 관리 | VIBE-FASHION ADMIN</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-layout">
+        <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="메뉴 닫기"></button>
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="관리자 메뉴">
+            <a class="brand" href="{{ url_for('admin.dashboard') }}" aria-label="VIBE-FASHION 관리자 대시보드"><span class="brand-mark"><i class="bi bi-bag-heart-fill" aria-hidden="true"></i></span><span class="brand-copy"><strong>VIBE-FASHION</strong><span>ADMIN</span></span></a>
+            <div class="sidebar-caption">WORKSPACE</div>
+            <nav class="sidebar-nav">
+                <a class="nav-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i><span>대시보드</span></a>
+                <a class="nav-item" href="{{ url_for('admin.products') }}"><i class="bi bi-box-seam" aria-hidden="true"></i><span>상품 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.inventory') }}"><i class="bi bi-archive" aria-hidden="true"></i><span>재고 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.orders') }}"><i class="bi bi-receipt" aria-hidden="true"></i><span>주문 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.members') }}"><i class="bi bi-people" aria-hidden="true"></i><span>회원 관리</span></a>
+                <a class="nav-item is-active" href="{{ url_for('admin.returns') }}" aria-current="page"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>반품/교환 관리</span></a>
+            </nav>
+            <div class="sidebar-bottom"><div class="profile-card"><span class="profile-avatar" aria-hidden="true">관</span><span class="profile-copy"><strong>관리자</strong><small>쇼핑몰 운영자</small></span><a class="icon-button logout-button" href="{{ url_for('auth.logout') }}" aria-label="로그아웃"><i class="bi bi-box-arrow-right" aria-hidden="true"></i></a></div><span class="sidebar-version">VIBE-FASHION · ADMIN</span></div>
+        </aside>
+
+        <div class="admin-main">
+            <header class="topbar">
+                <div class="topbar-leading"><button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="adminSidebar"><i class="bi bi-list" aria-hidden="true"></i></button><div class="page-heading"><span class="eyebrow">RETURNS & EXCHANGES</span><h1>반품/교환 관리</h1></div></div>
+                <div class="topbar-actions"><button class="icon-button topbar-icon" type="button" aria-label="검색"><i class="bi bi-search" aria-hidden="true"></i></button><button class="icon-button topbar-icon notification-button" type="button" aria-label="알림"><i class="bi bi-bell" aria-hidden="true"></i><span class="notification-dot"></span></button><span class="topbar-divider" aria-hidden="true"></span><span class="topbar-admin-name">관리자</span><span class="topbar-avatar" aria-label="관리자 프로필"><i class="bi bi-person-fill" aria-hidden="true"></i></span></div>
+            </header>
+
+            <main class="dashboard-content returns-content">
+                <section class="welcome-row returns-welcome" aria-labelledby="returnsTitle"><div><p class="section-kicker">AFTER-SALES</p><h2 id="returnsTitle">반품/교환 요청</h2><p class="welcome-copy">요청 건별 회수, 검수 및 후속 처리를 관리합니다.</p></div><div class="date-chip"><i class="bi bi-calendar3" aria-hidden="true"></i><span>{{ today_label }}</span></div></section>
+
+                {% if data_error %}<div class="member-data-error" role="alert"><i class="bi bi-exclamation-circle" aria-hidden="true"></i><span>{{ data_error }}</span></div>{% endif %}
+
+                <section class="returns-summary" aria-label="반품 및 교환 처리 통계">
+                    <article class="returns-stat"><span class="returns-stat-icon returns-tone-new"><i class="bi bi-inbox" aria-hidden="true"></i></span><div><span>신규 접수</span><strong id="newReturnsCount">0</strong></div></article>
+                    <article class="returns-stat"><span class="returns-stat-icon returns-tone-inspection"><i class="bi bi-search" aria-hidden="true"></i></span><div><span>검수 대기</span><strong id="inspectionReturnsCount">0</strong></div></article>
+                    <article class="returns-stat"><span class="returns-stat-icon returns-tone-approval"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span><div><span>승인 대기</span><strong id="approvalReturnsCount">0</strong></div></article>
+                    <article class="returns-stat"><span class="returns-stat-icon returns-tone-refund"><i class="bi bi-credit-card" aria-hidden="true"></i></span><div><span>환불 대기</span><strong id="refundReturnsCount">0</strong></div></article>
+                    <article class="returns-stat"><span class="returns-stat-icon returns-tone-exchange"><i class="bi bi-truck" aria-hidden="true"></i></span><div><span>교환 재배송</span><strong id="redeliveryReturnsCount">0</strong></div></article>
+                    <article class="returns-stat"><span class="returns-stat-icon returns-tone-complete"><i class="bi bi-check2-circle" aria-hidden="true"></i></span><div><span>처리 완료</span><strong id="completedReturnsCount">0</strong></div></article>
+                </section>
+
+                <section class="dashboard-panel returns-list-panel" aria-labelledby="returnsListTitle">
+                    <div class="returns-list-heading"><div><h3 id="returnsListTitle">요청 목록 <span class="result-count" id="returnsRowCount">0</span></h3><p>요청을 선택하면 접수 정보와 처리 단계를 확인할 수 있습니다.</p></div><label class="returns-search"><i class="bi bi-search" aria-hidden="true"></i><input id="returnsSearch" type="search" placeholder="접수번호, 주문번호, 회원명 검색" autocomplete="off"><span class="visually-hidden">반품/교환 검색</span></label></div>
+                    <div class="returns-tabs" role="tablist" aria-label="요청 유형 및 상태">
+                        <button class="returns-tab is-active" type="button" role="tab" aria-selected="true" data-filter="all">전체 <span id="tabCountAll">0</span></button>
+                        <button class="returns-tab" type="button" role="tab" aria-selected="false" data-filter="return">반품 <span id="tabCountReturn">0</span></button>
+                        <button class="returns-tab" type="button" role="tab" aria-selected="false" data-filter="exchange">교환 <span id="tabCountExchange">0</span></button>
+                        <button class="returns-tab" type="button" role="tab" aria-selected="false" data-filter="processing">처리중 <span id="tabCountProcessing">0</span></button>
+                        <button class="returns-tab" type="button" role="tab" aria-selected="false" data-filter="completed">완료 <span id="tabCountCompleted">0</span></button>
+                    </div>
+                    <div class="table-scroll returns-table-scroll">
+                        <table class="admin-table return-request-table">
+                            <thead><tr><th>접수번호</th><th>주문번호</th><th>회원명</th><th>상품</th><th>유형</th><th>신청사유</th><th>신청일</th><th>상태</th><th class="align-right">관리</th></tr></thead>
+                            <tbody id="returnsTableBody"></tbody>
+                        </table>
+                        <div class="empty-products" id="emptyReturns" {% if returns %}hidden{% endif %}><span class="empty-icon"><i class="bi bi-arrow-left-right" aria-hidden="true"></i></span><strong>{% if data_error %}요청 목록을 표시할 수 없습니다.{% else %}접수된 반품/교환 요청이 없습니다.{% endif %}</strong><span>{% if data_error %}관리자 권한과 서버 연결을 확인해 주세요.{% else %}조건을 변경하거나 새 요청을 기다려 주세요.{% endif %}</span></div>
+                    </div>
+                    <div class="returns-table-footer"><span id="returnsResultLabel">0건 표시</span><span><i class="bi bi-arrow-repeat" aria-hidden="true"></i>변경 상태는 저장 즉시 반영됩니다.</span></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog class="admin-dialog return-detail-dialog" id="returnDetailDialog" aria-labelledby="returnDetailTitle">
+        <div class="dialog-header"><div><span class="section-kicker">REQUEST DETAIL</span><h2 id="returnDetailTitle">반품/교환 상세</h2></div><button class="icon-button dialog-close" type="button" data-close-return aria-label="닫기"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div>
+        <div class="dialog-body return-detail-body" id="returnDetailBody"><div class="member-detail-loading"><span class="loading-spinner" aria-hidden="true"></span><span>요청 정보를 불러오는 중입니다.</span></div></div>
+        <div class="dialog-footer return-dialog-footer" id="returnDialogFooter"><button class="secondary-button" type="button" data-close-return>닫기</button></div>
+    </dialog>
+    <div class="toast-message" id="returnsToast" role="status" aria-live="polite"></div>
+
+    <script>
+        const returnRows = {{ returns | tojson }};
+        const detailUrlTemplate = {{ url_for('admin.return_detail', return_id=0) | tojson }};
+        const tableBody = document.getElementById('returnsTableBody');
+        const detailDialog = document.getElementById('returnDetailDialog');
+        let activeFilter = 'all';
+        let activeReturnId = null;
+        let toastTimer;
+
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+        }
+
+        function formatDate(value, includeTime = false) {
+            if (!value) return '—';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return escapeHTML(value);
+            return new Intl.DateTimeFormat('ko-KR', includeTime
+                ? { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }
+                : { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+        }
+
+        function money(value) {
+            return `${Number(value || 0).toLocaleString('ko-KR')}원`;
+        }
+
+        function requestStatus(row) {
+            if (row.status === 'rejected') return '거절';
+            if (row.status === 'completed') return '처리 완료';
+            if (row.status === 'requested') return '승인 대기';
+            if (row.collection_status !== 'completed') return '회수 대기';
+            if (row.inspection_status !== 'completed') return '검수 대기';
+            if (row.type === 'exchange') return row.redelivery_status === 'shipped' ? '처리 대기' : '교환 재배송';
+            return row.refund_status === 'completed' ? '처리 대기' : '환불 대기';
+        }
+
+        function isProcessing(row) {
+            return !['completed', 'rejected'].includes(row.status);
+        }
+
+        function renderSummary() {
+            const today = new Date().toISOString().slice(0, 10);
+            const count = (predicate) => returnRows.filter(predicate).length;
+            document.getElementById('newReturnsCount').textContent = count((row) => row.status === 'requested' && String(row.created_at).slice(0, 10) === today);
+            document.getElementById('inspectionReturnsCount').textContent = count((row) => row.status === 'approved' && row.collection_status === 'completed' && row.inspection_status !== 'completed');
+            document.getElementById('approvalReturnsCount').textContent = count((row) => row.status === 'requested');
+            document.getElementById('refundReturnsCount').textContent = count((row) => row.type === 'return' && row.status === 'approved' && row.inspection_status === 'completed' && row.refund_status !== 'completed');
+            document.getElementById('redeliveryReturnsCount').textContent = count((row) => row.type === 'exchange' && row.status === 'approved' && row.inspection_status === 'completed' && row.redelivery_status !== 'shipped');
+            document.getElementById('completedReturnsCount').textContent = count((row) => row.status === 'completed');
+            document.getElementById('tabCountAll').textContent = returnRows.length;
+            document.getElementById('tabCountReturn').textContent = count((row) => row.type === 'return');
+            document.getElementById('tabCountExchange').textContent = count((row) => row.type === 'exchange');
+            document.getElementById('tabCountProcessing').textContent = count(isProcessing);
+            document.getElementById('tabCountCompleted').textContent = count((row) => !isProcessing(row));
+        }
+
+        function renderRows() {
+            const searchTerm = document.getElementById('returnsSearch').value.trim().toLocaleLowerCase('ko-KR');
+            const filtered = returnRows.filter((row) => {
+                const searchable = `${row.number} ${row.order_number} ${row.member_name} ${row.product}`.toLocaleLowerCase('ko-KR');
+                const matchesTab = activeFilter === 'all'
+                    || activeFilter === row.type
+                    || (activeFilter === 'processing' && isProcessing(row))
+                    || (activeFilter === 'completed' && !isProcessing(row));
+                return matchesTab && searchable.includes(searchTerm);
+            });
+            tableBody.innerHTML = filtered.map((row) => {
+                const status = requestStatus(row);
+                const statusClass = row.status === 'completed' ? 'return-state-complete' : row.status === 'rejected' ? 'return-state-rejected' : status === '승인 대기' ? 'return-state-new' : 'return-state-progress';
+                return `<tr class="clickable-row return-request-row" data-return-id="${Number(row.id)}" tabindex="0" aria-label="${escapeHTML(row.number)} ${row.type === 'exchange' ? '교환' : '반품'} 상세 보기">
+                    <td><span class="return-number">${escapeHTML(row.number)}</span></td>
+                    <td><span class="return-order-number">${escapeHTML(row.order_number)}</span></td>
+                    <td class="return-member-name">${escapeHTML(row.member_name)}</td>
+                    <td class="return-product-name">${escapeHTML(row.product)}</td>
+                    <td><span class="return-type type-${row.type === 'exchange' ? 'exchange' : 'return'}">${row.type === 'exchange' ? '교환' : '반품'}</span></td>
+                    <td class="return-reason-cell">${escapeHTML(row.reason)}</td>
+                    <td class="return-created-date">${formatDate(row.created_at)}</td>
+                    <td><span class="return-status ${statusClass}"><i></i>${escapeHTML(status)}</span></td>
+                    <td class="align-right"><button class="return-detail-button" type="button" aria-label="${escapeHTML(row.number)} 상세 보기"><i class="bi bi-arrow-up-right-square" aria-hidden="true"></i></button></td>
+                </tr>`;
+            }).join('');
+            document.getElementById('returnsRowCount').textContent = filtered.length;
+            document.getElementById('returnsResultLabel').textContent = `${filtered.length}건 표시`;
+            document.getElementById('emptyReturns').hidden = filtered.length > 0;
+        }
+
+        function detailUrl(returnId) {
+            return detailUrlTemplate.replace(/0$/, String(returnId));
+        }
+
+        function flowValue(value) {
+            return value === 'completed' ? '완료' : value === 'shipped' ? '재배송 완료' : '대기';
+        }
+
+        function actionButtons(row) {
+            const buttons = [];
+            if (row.status === 'requested') {
+                buttons.push(['approve', row.type === 'exchange' ? '교환 승인' : '반품 승인', 'bi-check-lg', 'primary-button']);
+                buttons.push(['reject', row.type === 'exchange' ? '교환 거절' : '반품 거절', 'bi-x-lg', 'danger-button']);
+            } else if (row.status === 'approved') {
+                if (row.collection_status !== 'completed') buttons.push(['collection_complete', '회수 완료', 'bi-box-seam', 'secondary-button']);
+                else if (row.inspection_status !== 'completed') buttons.push(['inspection_complete', '검수 완료', 'bi-search', 'secondary-button']);
+                else if (row.type === 'return' && row.refund_status !== 'completed') buttons.push(['refund_complete', '환불 처리', 'bi-credit-card', 'primary-button']);
+                else if (row.type === 'exchange' && row.redelivery_status !== 'shipped') buttons.push(['redelivery', '재배송 처리', 'bi-truck', 'primary-button']);
+                else buttons.push(['complete', '처리 완료', 'bi-check2-circle', 'primary-button']);
+            }
+            return buttons.map(([action, label, icon, style]) => `<button class="${style} return-action-button" type="button" data-return-action="${action}"><i class="bi ${icon}" aria-hidden="true"></i>${label}</button>`).join('');
+        }
+
+        function detailSection(title, icon, content) {
+            return `<section class="return-detail-section"><h3><i class="bi ${icon}" aria-hidden="true"></i>${title}</h3><div class="return-detail-section-content">${content}</div></section>`;
+        }
+
+        function detailField(label, value) {
+            return `<div class="return-detail-field"><span>${label}</span><strong>${escapeHTML(value || '—')}</strong></div>`;
+        }
+
+        function renderDetail(data) {
+            const row = data.request;
+            const isExchange = row.type === 'exchange';
+            const productRows = data.products.length
+                ? data.products.map((product) => `<div class="return-product-entry"><div><strong>${escapeHTML(product.product_name)}</strong><span>${escapeHTML(product.option_info || '옵션 정보 없음')} · ${Number(product.quantity || 1)}개</span></div><strong>${money(product.subtotal)}</strong></div>`).join('')
+                : '<p class="return-detail-empty">상품 정보가 없습니다.</p>';
+            const stockContent = data.exchange_stock.length
+                ? data.exchange_stock.map((option) => `<span class="exchange-stock-chip">${escapeHTML([option.color, option.size].filter(Boolean).join(' / ') || option.sku || '옵션')} <strong>${Number(option.stock_quantity || 0)}개</strong></span>`).join('')
+                : '<span class="return-detail-empty">연결된 상품 옵션 재고 정보가 없습니다.</span>';
+            document.getElementById('returnDetailTitle').textContent = `${row.number} ${isExchange ? '교환' : '반품'} 상세`;
+            document.getElementById('returnDetailBody').innerHTML = `
+                <div class="return-detail-summary"><span class="return-type type-${isExchange ? 'exchange' : 'return'}">${isExchange ? '교환' : '반품'}</span><strong>${escapeHTML(requestStatus(row))}</strong><span>${formatDate(row.created_at, true)}</span></div>
+                <div class="return-detail-grid">
+                    ${detailSection('주문정보', 'bi-receipt', `<div class="return-detail-fields">${detailField('주문번호', data.order.order_number)}${detailField('주문일', formatDate(data.order.created_at))}${detailField('주문상태', data.order.status)}${detailField('결제금액', money(data.order.final_amount || data.order.total_amount))}</div>`)}
+                    ${detailSection('회원정보', 'bi-person', `<div class="return-detail-fields">${detailField('회원명', data.member.full_name || data.order.recipient_name)}${detailField('이메일', data.member.email)}${detailField('전화번호', data.member.phone || data.order.recipient_phone)}</div>`)}
+                    ${detailSection(isExchange ? '기존 상품' : '상품정보', 'bi-box-seam', `<div class="return-products">${productRows}</div>${isExchange ? `<div class="exchange-option-request"><span>교환 요청 옵션</span><strong>${escapeHTML(row.requested_option || '요청 옵션 미입력')}</strong></div><div class="exchange-stock-list"><span>교환 상품 재고</span><div>${stockContent}</div></div>` : ''}`)}
+                    ${detailSection(isExchange ? '교환 사유 및 요청사항' : '반품사유 및 고객 요청사항', 'bi-chat-left-text', `<div class="return-reason-detail"><span>신청 사유</span><p>${escapeHTML(row.reason)}</p><span>고객 요청사항</span><p>${escapeHTML(row.customer_request || '별도 요청사항 없음')}</p></div>${!isExchange ? `<div class="return-refund-amount"><span>환불금액</span><strong>${money(row.refund_amount)}</strong></div>` : ''}`)}
+                </div>
+                ${detailSection('처리 상태', 'bi-list-check', `<div class="return-flow-grid"><div><span>회수 상태</span><strong>${flowValue(row.collection_status)}</strong></div><div><span>상품 검수 상태</span><strong>${flowValue(row.inspection_status)}</strong></div>${isExchange ? `<div><span>재배송 상태</span><strong>${flowValue(row.redelivery_status)}</strong></div>` : `<div><span>환불 상태</span><strong>${flowValue(row.refund_status)}</strong></div>`}</div>`)}
+            `;
+            document.getElementById('returnDialogFooter').innerHTML = `${actionButtons(row)}<button class="secondary-button" type="button" data-close-return>닫기</button>`;
+        }
+
+        async function openReturn(returnId) {
+            activeReturnId = Number(returnId);
+            document.getElementById('returnDetailBody').innerHTML = '<div class="member-detail-loading"><span class="loading-spinner" aria-hidden="true"></span><span>요청 정보를 불러오는 중입니다.</span></div>';
+            document.getElementById('returnDialogFooter').innerHTML = '<button class="secondary-button" type="button" data-close-return>닫기</button>';
+            detailDialog.showModal();
+            try {
+                const response = await fetch(detailUrl(activeReturnId), { headers: { Accept: 'application/json' } });
+                if (!response.ok) throw new Error('요청 상세를 불러오지 못했습니다. 관리자 권한과 서버 연결을 확인해 주세요.');
+                renderDetail(await response.json());
+            } catch (error) {
+                document.getElementById('returnDetailBody').innerHTML = `<div class="member-detail-error"><i class="bi bi-exclamation-circle" aria-hidden="true"></i><strong>${escapeHTML(error.message)}</strong></div>`;
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('returnsToast');
+            toast.textContent = message;
+            toast.classList.add('is-visible');
+            window.clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 2500);
+        }
+
+        tableBody.addEventListener('click', (event) => {
+            const row = event.target.closest('[data-return-id]');
+            if (row) openReturn(row.dataset.returnId);
+        });
+        tableBody.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            const row = event.target.closest('[data-return-id]');
+            if (!row || event.target.closest('button')) return;
+            event.preventDefault();
+            openReturn(row.dataset.returnId);
+        });
+        document.getElementById('returnDialogFooter').addEventListener('click', async (event) => {
+            const button = event.target.closest('[data-return-action]');
+            if (!button) return;
+            button.disabled = true;
+            try {
+                const response = await fetch(`${detailUrl(activeReturnId)}/action`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    body: JSON.stringify({ action: button.dataset.returnAction }),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || '상태를 변경하지 못했습니다.');
+                const row = returnRows.find((item) => Number(item.id) === activeReturnId);
+                if (row) Object.assign(row, result.refund);
+                renderSummary();
+                renderRows();
+                showToast(result.message);
+                await openReturn(activeReturnId);
+            } catch (error) {
+                showToast(error.message);
+                button.disabled = false;
+            }
+        });
+        document.getElementById('returnsSearch').addEventListener('input', renderRows);
+        document.querySelectorAll('.returns-tab').forEach((tab) => tab.addEventListener('click', () => {
+            activeFilter = tab.dataset.filter;
+            document.querySelectorAll('.returns-tab').forEach((item) => {
+                const selected = item === tab;
+                item.classList.toggle('is-active', selected);
+                item.setAttribute('aria-selected', String(selected));
+            });
+            renderRows();
+        }));
+        document.getElementById('returnDialogFooter').addEventListener('click', (event) => {
+            if (event.target.closest('[data-close-return]')) detailDialog.close();
+        });
+        document.querySelectorAll('[data-close-return]').forEach((button) => button.addEventListener('click', () => detailDialog.close()));
+        detailDialog.addEventListener('click', (event) => { if (event.target === detailDialog) detailDialog.close(); });
+
+        const sidebar = document.getElementById('adminSidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+        function setSidebarOpen(isOpen) {
+            sidebar.classList.toggle('is-open', isOpen);
+            sidebarBackdrop.classList.toggle('is-visible', isOpen);
+            menuToggle.setAttribute('aria-expanded', String(isOpen));
+        }
+        menuToggle.addEventListener('click', () => setSidebarOpen(!sidebar.classList.contains('is-open')));
+        sidebarBackdrop.addEventListener('click', () => setSidebarOpen(false));
+        document.addEventListener('keydown', (event) => { if (event.key === 'Escape') setSidebarOpen(false); });
+
+        renderSummary();
+        renderRows();
+    </script>
+</body>
+</html>

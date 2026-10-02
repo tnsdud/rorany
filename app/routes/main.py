@@ -1,9 +1,9 @@
-from datetime import datetime
+﻿from datetime import datetime
 import os
 import uuid
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
 from supabase_auth.errors import AuthApiError, AuthError
-from app.routes.auth import login_required, get_supabase_client
+from app.routes.auth import login_required, get_supabase_client, get_supabase_service_client
 
 # 'main'이라는 이름의 블루프린트 생성
 # URL 프리픽스 없이 루트('/') 경로 등 메인 화면을 담당합니다.
@@ -20,7 +20,7 @@ PRODUCTS = [
         "price": "395,000",
         "original_price": None,
         "sub_desc": "여친선물 1위 / 디자이너 극찬! 당일발송 가능",
-        "image": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80",
+        "image": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&auto=format&fit=crop&q=80",
         "description": "물방울 라인 프레임에 세팅된 영롱한 1부 다이아몬드 프로포즈 목걸이"
     },
     {
@@ -31,7 +31,7 @@ PRODUCTS = [
         "price": "436,500",
         "original_price": "485,000",
         "sub_desc": "여친선물 1위 / 쿠폰적용 10% 특별할인",
-        "image": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&auto=format&fit=crop&q=80",
+        "image": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&auto=format&fit=crop&q=80",
         "description": "유려한 트위스트 곡선과 서브 스톤이 조화로운 프리미엄 프로포즈 목걸이"
     },
     {
@@ -53,7 +53,7 @@ PRODUCTS = [
         "price": "490,500",
         "original_price": "545,000",
         "sub_desc": "투톤 서클 링 & 드롭 큐빅 포인트 인기상품",
-        "image": "https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?w=800&auto=format&fit=crop&q=80",
+        "image": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&auto=format&fit=crop&q=80",
         "description": "로즈골드와 화이트골드 링이 교차되며 드롭되는 우아한 듀얼 링 목걸이"
     },
     # --- 시계 / 워치 (BEST 클래식 스퀘어 메쉬 시계) ---
@@ -429,7 +429,7 @@ def index():
 def product_detail(product_id):
     """
     [상품 상세 페이지] GET /products/<product_id>
-    - Supabase에서 product_id로 상품 정보 조회 (없을 경우 fallback)
+    - 로컬 마스터 데이터(PRODUCTS)에서만 상품 정보 조회
     - 상품 이미지, 이름, 가격(할인가/정가), 설명 표시
     - product_options 테이블에서 해당 상품의 색상(color) 목록을 DISTINCT로 조회
     """
@@ -437,57 +437,25 @@ def product_detail(product_id):
     product_data = None
     colors = []
 
-    # 1. Supabase에서 상품 정보 조회
-    try:
-        p_res = supabase.table("products").select("*, categories(name)").eq("id", product_id).execute()
-        if p_res.data:
-            sp = p_res.data[0]
-            cat_name = sp.get('categories', {}).get('name') if sp.get('categories') else 'FASHION'
-            
-            # 대표 이미지 조회
-            img_res = supabase.table("product_images").select("image_url").eq("product_id", product_id).order("display_order").limit(1).execute()
-            img_url = img_res.data[0]['image_url'] if img_res.data else None
+    # 1. 로컬 마스터 데이터에서 상품 정보 조회 (일관성 유지)
+    fallback = PRODUCT_DICT.get(product_id)
+    if not fallback:
+        flash("존재하지 않는 상품입니다.", "danger")
+        return redirect(url_for('main.index'))
 
-            # fallback 로컬 상품 정보
-            fallback = PRODUCT_DICT.get(product_id)
+    price_int = int(fallback['price'].replace(',', ''))
+    orig_price_int = int(fallback['original_price'].replace(',', '')) if fallback.get('original_price') else None
 
-            price_val = sp.get('sale_price') or sp.get('price') or (int(fallback['price'].replace(',', '')) if fallback else 0)
-            orig_price_val = sp.get('price') if sp.get('sale_price') else (int(fallback['original_price'].replace(',', '')) if (fallback and fallback.get('original_price')) else None)
-
-            product_data = {
-                "id": sp['id'],
-                "name": sp.get('name') or (fallback['name'] if fallback else '상품'),
-                "category": cat_name,
-                "badge": fallback.get('badge') if fallback else None,
-                "price": price_val,
-                "original_price": orig_price_val,
-                "description": sp.get('description') or (fallback['description'] if fallback else ''),
-                "image_url": img_url or (fallback['image'] if fallback else 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80')
-            }
-    except Exception as e:
-        import logging
-        logging.error(f"[Product Fetch Error] {e}")
-
-    # Supabase 조회가 실패하거나 데이터가 없을 때 로컬 마스터 데이터 활용
-    if not product_data:
-        fallback = PRODUCT_DICT.get(product_id)
-        if not fallback:
-            flash("존재하지 않는 상품입니다.", "danger")
-            return redirect(url_for('main.index'))
-
-        price_int = int(fallback['price'].replace(',', ''))
-        orig_price_int = int(fallback['original_price'].replace(',', '')) if fallback.get('original_price') else None
-
-        product_data = {
-            "id": fallback['id'],
-            "name": fallback['name'],
-            "category": fallback['category'],
-            "badge": fallback.get('badge'),
-            "price": price_int,
-            "original_price": orig_price_int,
-            "description": fallback.get('description', '') or fallback.get('sub_desc', ''),
-            "image_url": fallback['image']
-        }
+    product_data = {
+        "id": fallback['id'],
+        "name": fallback['name'],
+        "category": fallback['category'],
+        "badge": fallback.get('badge'),
+        "price": price_int,
+        "original_price": orig_price_int,
+        "description": fallback.get('description', '') or fallback.get('sub_desc', ''),
+        "image_url": fallback['image']
+    }
 
     # 2. product_options 테이블에서 해당 상품의 색상(color) 목록을 DISTINCT로 조회
     try:
@@ -1161,6 +1129,13 @@ def checkout():
 
     order_number = f"ORD-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
+    # Service Role 클라이언트 초기화
+    service_client = get_supabase_service_client()
+    if not service_client:
+        import logging
+        logging.warning("[Order Create] Service Role 클라이언트 초기화 실패")
+        return jsonify({'success': False, 'message': '주문 처리 중 오류가 발생했습니다. (서버 설정 문제)'}), 500
+
     try:
         supabase = get_supabase_client()
         order_payload = {
@@ -1190,7 +1165,7 @@ def checkout():
         for item in order_items_to_create:
             item["order_id"] = new_order_id
 
-        supabase.table("order_items").insert(order_items_to_create).execute()
+        service_client.table("order_items").insert(order_items_to_create).execute()
 
         # 장바구니 비우기
         session.pop('cart', None)
@@ -1537,3 +1512,453 @@ def refund_policy():
     교환 및 환불정책 안내 페이지 핸들러
     """
     return render_template('refund_policy.html')
+
+
+# ==============================================================================
+# �ֹ� ���Ʈ
+# ==============================================================================
+
+@main_bp.route('/order/checkout', methods=['GET'])
+@login_required
+def order_checkout():
+    """
+    �ֹ��� ������ (GET /order/checkout)
+    
+    �䱸����:
+    1. �α��� �ʼ�
+    2. ��ٱ��� ��������� /cart �����̷�Ʈ
+    3. ǰ�� ��ǰ ������ /cart�� �����̷�Ʈ + �޽���
+    4. ��ٱ��� ������ ��� ǥ�� (���� �Ұ�)
+    5. ����� �Է� ��
+    6. �⺻ ����� �ҷ����� ��ư
+    7. ���� �ݾ� ���
+    8. �����ϱ� ��ư
+    """
+    user_id = session.get('user_id')
+    supabase = get_supabase_client(use_session=True)
+    
+    # 1. ��ٱ��� ������ ��ȸ (DB)
+    cart_items = []
+    total_price = 0
+    total_count = 0
+    has_out_of_stock = False
+    
+    try:
+        # Supabase���� ������� ��ٱ��� ��ȸ (products, product_options ���� ����)
+        carts_result = supabase.table("carts").select(
+            "id, product_id, quantity, option_id, products(id, name, price), product_options(id, color, size, stock_quantity)"
+        ).eq("user_id", user_id).execute()
+        
+        if carts_result.data:
+            for cart_item in carts_result.data:
+                product = cart_item.get('products', {})
+                option = cart_item.get('product_options', {}) or {}
+                stock_quantity = option.get('stock_quantity', 0) if option else 0
+                is_out_of_stock = stock_quantity <= 0
+                
+                if is_out_of_stock:
+                    has_out_of_stock = True
+                
+                price = product.get('price', 0)
+                quantity = cart_item.get('quantity', 1)
+                subtotal = price * quantity
+                
+                cart_items.append({
+                    'cart_id': cart_item.get('id'),
+                    'product_id': product.get('id'),
+                    'name': product.get('name', '��ǰ�� ����'),
+                    'price': price,
+                    'quantity': quantity,
+                    'subtotal': subtotal,
+                    'color': option.get('color') if option else '�⺻',
+                    'size': option.get('size') if option else 'FREE',
+                    'stock_quantity': stock_quantity,
+                    'is_out_of_stock': is_out_of_stock
+                })
+                
+                total_price += subtotal
+                total_count += quantity
+    except Exception as e:
+        import logging
+        logging.error(f"[Order Checkout - Cart Fetch Error] {e}")
+    
+    # 2. ��ٱ��� ����ִ��� Ȯ��
+    if not cart_items:
+        flash("��ٱ��ϰ� ��� �־� �ֹ��� ������ �� �����ϴ�.", "warning")
+        return redirect(url_for('main.cart'))
+    
+    # 3. ǰ�� ��ǰ�� �ִ��� Ȯ��
+    if has_out_of_stock:
+        flash("ǰ���� ��ǰ�� �־� �ֹ��� �� �����ϴ�.", "danger")
+        return redirect(url_for('main.cart'))
+    
+    # 4. ��ۺ� ���
+    shipping_fee = 0 if total_price >= 50000 else 3000
+    final_amount = total_price + shipping_fee
+    
+    # 5. ����� �⺻ ����� ��ȸ
+    default_shipping_address = None
+    try:
+        profile = supabase.table("profiles").select("full_name, phone").eq("id", user_id).execute()
+        if profile.data:
+            default_shipping_address = {
+                'full_name': profile.data[0].get('full_name', ''),
+                'phone': profile.data[0].get('phone', '')
+            }
+    except Exception as e:
+        import logging
+        logging.error(f"[Order Checkout - Profile Fetch Error] {e}")
+    
+    return render_template(
+        'order/checkout.html',
+        cart_items=cart_items,
+        total_price=total_price,
+        total_count=total_count,
+        shipping_fee=shipping_fee,
+        final_amount=final_amount,
+        default_shipping_address=default_shipping_address
+    )
+
+
+@main_bp.route('/order/complete', methods=['POST'])
+@login_required
+def order_complete():
+    """
+    �ֹ� �Ϸ� ó�� (POST /order/complete)
+    
+    ��û Body:
+    - recipient_name: ������ �̸�
+    - recipient_phone: �޴��� ��ȣ
+    - shipping_address: ��� �ּ�
+    - shipping_memo: ��� �޸� (���û���)
+    """
+    user_id = session.get('user_id')
+    user = session.get('user') or {}
+    supabase = get_supabase_client(use_session=True)
+    
+    # 1. �� ������ ����
+    recipient_name = request.form.get('recipient_name', '').strip()
+    recipient_phone = request.form.get('recipient_phone', '').strip()
+    shipping_address = request.form.get('shipping_address', '').strip()
+    shipping_memo = request.form.get('shipping_memo', '').strip()
+    
+    # �ʼ� �ʵ� Ȯ��
+    if not recipient_name:
+        return jsonify({'success': False, 'message': '������ �̸��� �Է����ּ���.'}), 400
+    
+    if not recipient_phone:
+        return jsonify({'success': False, 'message': '�޴��� ��ȣ�� �Է����ּ���.'}), 400
+    
+    # �޴��� ��ȣ ���� ���� (010-0000-0000)
+    import re
+    phone_pattern = r'^01[0-9]-\d{3,4}-\d{4}$'
+    if not re.match(phone_pattern, recipient_phone):
+        return jsonify({'success': False, 'message': '�޴��� ��ȣ ������ �ùٸ��� �ʽ��ϴ�. (010-0000-0000)'}), 400
+    
+    if not shipping_address:
+        return jsonify({'success': False, 'message': '��� �ּҸ� �Է����ּ���.'}), 400
+    
+    if len(shipping_address) < 5:
+        return jsonify({'success': False, 'message': '��� �ּҴ� �ּ� 5�� �̻��̾�� �մϴ�.'}), 400
+    
+    # 2. ��ٱ��� ��ȸ �� �ֹ� ������ �غ�
+    try:
+        carts_result = supabase.table("carts").select(
+            "id, product_id, quantity, option_id, products(id, name, price), product_options(id, color, size, stock_quantity)"
+        ).eq("user_id", user_id).execute()
+        
+        if not carts_result.data:
+            return jsonify({'success': False, 'message': '��ٱ��ϰ� ��� �ֽ��ϴ�.'}), 400
+        
+        order_items_to_create = []
+        total_amount = 0
+        
+        for cart_item in carts_result.data:
+            product = cart_item.get('products', {})
+            option = cart_item.get('product_options', {}) or {}
+            stock_quantity = option.get('stock_quantity', 0) if option else 0
+            
+            # ǰ�� Ȯ��
+            if stock_quantity <= 0:
+                return jsonify({'success': False, 'message': 'ǰ���� ��ǰ�� ���ԵǾ� �ֽ��ϴ�.'}), 400
+            
+            quantity = cart_item.get('quantity', 1)
+            price = product.get('price', 0)
+            subtotal = price * quantity
+            
+            order_items_to_create.append({
+                'order_id': None,  # �ֹ� ���� �� �߰�
+                'product_id': product.get('id'),
+                'option_id': option.get('id') if option else None,
+                'product_name': product.get('name', '��ǰ�� ����'),
+                'option_info': f"{option.get('color', '�⺻')} / {option.get('size', 'FREE')}" if option else '�⺻ �ɼ�',
+                'price': price,
+                'quantity': quantity,
+                'subtotal': subtotal
+            })
+            
+            total_amount += subtotal
+        
+        # 3. ��ۺ� ��� �� �ֹ� ��ȣ ����
+        shipping_fee = 0 if total_amount >= 50000 else 3000
+        final_amount = total_amount + shipping_fee
+        order_number = f"ORD-{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+        
+        # Service Role 클라이언트 초기화
+        service_client = get_supabase_service_client()
+        if not service_client:
+            logging.warning("[Order Create] Service Role 클라이언트 초기화 실패")
+            return jsonify({'success': False, 'message': '주문 처리 중 오류가 발생했습니다. (서버 설정 문제)'}), 500
+        
+        # 4. �ֹ� ����
+        order_payload = {
+            'order_number': order_number,
+            'user_id': user_id,
+            'status': 'paid',  # ���� ������ ��� �Ϸ�
+            'total_amount': total_amount,
+            'discount_amount': 0,
+            'shipping_fee': shipping_fee,
+            'final_amount': final_amount,
+            'recipient_name': recipient_name,
+            'recipient_phone': recipient_phone,
+            'shipping_address': shipping_address,
+            'shipping_memo': shipping_memo or None,
+            'payment_method': '���� ����',
+            'paid_at': datetime.utcnow().isoformat()
+        }
+        
+        order_result = service_client.table("orders").insert(order_payload).execute()
+        if not order_result.data:
+            return jsonify({'success': False, 'message': '�ֹ� ���� �� ������ �߻��߽��ϴ�.'}), 500
+        
+        new_order_id = order_result.data[0]['id']
+        
+        # 5. �ֹ� ������ �߰�
+        for item in order_items_to_create:
+            item['order_id'] = new_order_id
+        
+        service_client.table("order_items").insert(order_items_to_create).execute()
+        
+        # 6. ��ٱ��� ������ ����
+        for cart_item in carts_result.data:
+            supabase.table("carts").delete().eq("id", cart_item.get('id')).execute()
+        
+        return jsonify({
+            'success': True,
+            'message': f'�ֹ��� �Ϸ�Ǿ����ϴ�! (�ֹ���ȣ: {order_number})',
+            'order_number': order_number,
+            'redirect_url': url_for('main.mypage')
+        }), 200
+        
+    except Exception as e:
+        import logging
+        logging.error(f"[Order Complete Error] {e}")
+        return jsonify({'success': False, 'message': f'�ֹ� ó�� �� ������ �߻��߽��ϴ�.'}), 500
+
+
+# ==============================================================================
+# �ֹ� ���� ���Ʈ (POST /order/create)
+# ==============================================================================
+
+@main_bp.route('/order/create', methods=['POST'])
+@login_required
+def order_create():
+    """
+    �ֹ� ���� (POST /order/create)
+    
+    ó�� ����:
+    1. ��ٱ��� ��ȸ + ��� Ȯ�� (��� ���� �� ����, ó�� �ߴ�)
+    2. ����� �Է°� ���� �� �����
+    3. �ֹ���ȣ ����
+    4. orders ���̺� INSERT
+    5. order_items INSERT
+    6. product_options.stock ���� (���Ǻ� UPDATE)
+    7. carts ������ DELETE
+    8. /order/complete/<order_id> �����̷�Ʈ
+    """
+    user_id = session.get('user_id')
+    supabase = get_supabase_client(use_session=True)
+    
+    # 1. ��ٱ��� ��ȸ + ��� Ȯ��
+    import logging
+    try:
+        carts_result = supabase.table("carts").select(
+            "id, product_id, quantity, option_id, products(id, name, price, category), product_options(id, color, size, stock_quantity)"
+        ).eq("user_id", user_id).execute()
+        
+        if not carts_result.data:
+            return jsonify({'success': False, 'message': '��ٱ��ϰ� ��� �ֽ��ϴ�.'}), 400
+        
+        # ��� Ȯ�� (���� ��� �������� ����� Ȯ���ϰ�, �����ϸ� �ƹ��͵� ó������ ����)
+        cart_items_with_stock = []
+        for cart_item in carts_result.data:
+            product = cart_item.get('products', {})
+            option = cart_item.get('product_options', {}) or {}
+            stock_quantity = option.get('stock_quantity', 0) if option else 0
+            quantity = cart_item.get('quantity', 1)
+            
+            # ��� ���� Ȯ��
+            if stock_quantity < quantity:
+                return jsonify({
+                    'success': False,
+                    'message': f"[{product.get('name', '��ǰ')}] ����� �����մϴ�. (��û: {quantity}��, ����: {stock_quantity}��)"
+                }), 400
+            
+            cart_items_with_stock.append({
+                'cart_item': cart_item,
+                'product': product,
+                'option': option,
+                'quantity': quantity,
+                'stock_quantity': stock_quantity
+            })
+        
+    except Exception as e:
+        logging.error(f"[Order Create - Cart Fetch Error] {e}")
+        return jsonify({'success': False, 'message': '��ٱ��� ��ȸ �� ������ �߻��߽��ϴ�.'}), 500
+    
+    # 2. ����� �Է°� ���� �� �����
+    recipient_name = request.form.get('recipient_name', '').strip()
+    recipient_phone = request.form.get('recipient_phone', '').strip()
+    shipping_address = request.form.get('shipping_address', '').strip()
+    shipping_memo = request.form.get('shipping_memo', '').strip()
+    
+    # �ʼ� �ʵ� Ȯ��
+    if not recipient_name or len(recipient_name) == 0:
+        return jsonify({'success': False, 'message': '������ �̸��� �Է����ּ���.'}), 400
+    
+    if not recipient_phone or len(recipient_phone) == 0:
+        return jsonify({'success': False, 'message': '�޴��� ��ȣ�� �Է����ּ���.'}), 400
+    
+    # �޴��� ��ȣ ���� ����
+    import re
+    phone_pattern = r'^01[0-9]-\d{3,4}-\d{4}$'
+    if not re.match(phone_pattern, recipient_phone):
+        return jsonify({'success': False, 'message': '�޴��� ��ȣ ������ �ùٸ��� �ʽ��ϴ�. (010-0000-0000)'}), 400
+    
+    if not shipping_address or len(shipping_address) == 0:
+        return jsonify({'success': False, 'message': '��� �ּҸ� �Է����ּ���.'}), 400
+    
+    if len(shipping_address) < 5:
+        return jsonify({'success': False, 'message': '��� �ּҴ� �ּ� 5�� �̻��̾�� �մϴ�.'}), 400
+    
+    # 3. �ֹ���ȣ ����: 'VF-' + YYYYMMDD + '-' + 4�ڸ� �������� + �и��� Ÿ�ӽ����� �� 3�ڸ�
+    import time
+    now = datetime.utcnow()
+    date_str = now.strftime('%Y%m%d')
+    random_4digits = str(uuid.uuid4().int % 10000).zfill(4)  # 0000-9999
+    timestamp_millis = str(int(time.time() * 1000))[-3:]  # ������ 3�ڸ�
+    order_number = f"VF-{date_str}-{random_4digits}{timestamp_millis}"
+
+    service_client = get_supabase_service_client()
+    if not service_client:
+        return jsonify({'success': False, 'message': '주문 처리 중 오류가 발생했습니다. (서버 설정 문제)'}), 500
+    new_order_id = None
+    
+    try:
+        # 4. orders ���̺��� INSERT
+        total_amount = sum(item['quantity'] * item['product']['price'] for item in cart_items_with_stock)
+        shipping_fee = 0 if total_amount >= 50000 else 3000
+        final_amount = total_amount + shipping_fee
+        
+        order_payload = {
+            'order_number': order_number,
+            'user_id': user_id,
+            'status': 'paid',
+            'total_amount': total_amount,
+            'discount_amount': 0,
+            'shipping_fee': shipping_fee,
+            'final_amount': final_amount,
+            'recipient_name': recipient_name,
+            'recipient_phone': recipient_phone,
+            'shipping_address': shipping_address,
+            'shipping_memo': shipping_memo or None,
+            'payment_method': '���� ����',
+            'paid_at': now.isoformat()
+        }
+        
+        order_result = service_client.table("orders").insert(order_payload).execute()
+        if not order_result.data:
+            return jsonify({'success': False, 'message': '�ֹ� ���� �� ������ �߻��߽��ϴ�.'}), 500
+        
+        new_order_id = order_result.data[0]['id']
+        
+        # 5. order_items ���̺��� INSERT (��ǰ��, ����, ������, ���� ������)
+        order_items_to_create = []
+        for item in cart_items_with_stock:
+            product = item['product']
+            option = item['option']
+            quantity = item['quantity']
+            price = product.get('price', 0)
+            
+            order_items_to_create.append({
+                'order_id': new_order_id,
+                'product_id': product.get('id'),
+                'option_id': option.get('id') if option else None,
+                'product_name': product.get('name', '��ǰ�� ����'),
+                'option_info': f"{option.get('color', '�⺻')} / {option.get('size', 'FREE')}" if option else '�⺻ �ɼ�',
+                'price': price,
+                'quantity': quantity,
+                'subtotal': price * quantity
+            })
+        
+        service_client.table("order_items").insert(order_items_to_create).execute()
+        
+        # 6. carts ������ DELETE
+        for item in cart_items_with_stock:
+            cart_id = item['cart_item'].get('id')
+            supabase.table("carts").delete().eq("id", cart_id).eq("user_id", user_id).execute()
+        
+        # 7. ���� ���� (redirect_url�� /order/complete/<order_id>)
+        return jsonify({
+            'success': True,
+            'message': f'�ֹ��� �Ϸ�Ǿ����ϴ�! (�ֹ���ȣ: {order_number})',
+            'order_number': order_number,
+            'order_id': new_order_id,
+            'redirect_url': url_for('main.order_completion', order_id=new_order_id)
+        }), 200
+        
+    except Exception as e:
+        logging.error(f"[Order Create Error] {e}")
+        if new_order_id:
+            try:
+                service_client.table("orders").delete().eq("id", new_order_id).execute()
+            except Exception as rollback_err:
+                logging.error(f"[Order Create - Rollback Error] {rollback_err}")
+        return jsonify({'success': False, 'message': '�ֹ� ó�� �� ������ �߻��߽��ϴ�.'}), 500
+
+
+@main_bp.route('/order/complete/<order_id>', methods=['GET'])
+@login_required
+def order_completion(order_id):
+    """
+    �ֹ� �Ϸ� ������ (GET /order/complete/<order_id>)
+    �ֹ� ������ ��ȸ�Ͽ� ǥ���մϴ�.
+    """
+    user_id = session.get('user_id')
+    supabase = get_supabase_client(use_session=True)
+    
+    try:
+        # �ֹ� ���� ��ȸ
+        order_result = supabase.table("orders").select("*").eq("id", order_id).eq("user_id", user_id).execute()
+        
+        if not order_result.data:
+            flash("�ֹ� ������ ã�� �� �����ϴ�.", "danger")
+            return redirect(url_for('main.mypage'))
+        
+        order = order_result.data[0]
+        
+        # �ֹ� ��ǰ ��ȸ
+        order_items_result = supabase.table("order_items").select("*").eq("order_id", order_id).execute()
+        order_items = order_items_result.data if order_items_result.data else []
+        
+        return render_template(
+            'order/complete.html',
+            order=order,
+            order_items=order_items
+        )
+        
+    except Exception as e:
+        import logging
+        logging.error(f"[Order Completion Error] {e}")
+        flash("�ֹ� ���� ��ȸ �� ������ �߻��߽��ϴ�.", "danger")
+        return redirect(url_for('main.mypage'))

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>상품 관리 | VIBE-FASHION ADMIN</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-layout">
+        <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="메뉴 닫기"></button>
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="관리자 메뉴">
+            <a class="brand" href="{{ url_for('admin.dashboard') }}" aria-label="VIBE-FASHION 관리자 대시보드">
+                <span class="brand-mark"><i class="bi bi-bag-heart-fill" aria-hidden="true"></i></span>
+                <span class="brand-copy"><strong>VIBE-FASHION</strong><span>ADMIN</span></span>
+            </a>
+            <div class="sidebar-caption">WORKSPACE</div>
+            <nav class="sidebar-nav">
+                <a class="nav-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-grid-1x2-fill" aria-hidden="true"></i><span>대시보드</span></a>
+                <a class="nav-item is-active" href="{{ url_for('admin.products') }}" aria-current="page"><i class="bi bi-box-seam" aria-hidden="true"></i><span>상품 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.inventory') }}"><i class="bi bi-archive" aria-hidden="true"></i><span>재고 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.orders') }}"><i class="bi bi-receipt" aria-hidden="true"></i><span>주문 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.members') }}"><i class="bi bi-people" aria-hidden="true"></i><span>회원 관리</span></a>
+                <a class="nav-item" href="{{ url_for('admin.returns') }}"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>반품/교환 관리</span></a>
+            </nav>
+            <div class="sidebar-bottom">
+                <div class="profile-card">
+                    <span class="profile-avatar" aria-hidden="true">관</span>
+                    <span class="profile-copy"><strong>관리자</strong><small>쇼핑몰 운영자</small></span>
+                    <a class="icon-button logout-button" href="{{ url_for('auth.logout') }}" aria-label="로그아웃"><i class="bi bi-box-arrow-right" aria-hidden="true"></i></a>
+                </div>
+                <span class="sidebar-version">VIBE-FASHION · ADMIN</span>
+            </div>
+        </aside>
+
+        <div class="admin-main">
+            <header class="topbar">
+                <div class="topbar-leading">
+                    <button class="icon-button menu-toggle" id="menuToggle" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="adminSidebar"><i class="bi bi-list" aria-hidden="true"></i></button>
+                    <div class="page-heading"><span class="eyebrow">CATALOG</span><h1>상품 관리</h1></div>
+                </div>
+                <div class="topbar-actions">
+                    <button class="icon-button topbar-icon" type="button" aria-label="검색"><i class="bi bi-search" aria-hidden="true"></i></button>
+                    <button class="icon-button topbar-icon notification-button" type="button" aria-label="알림"><i class="bi bi-bell" aria-hidden="true"></i><span class="notification-dot"></span></button>
+                    <span class="topbar-divider" aria-hidden="true"></span><span class="topbar-admin-name">관리자</span>
+                    <span class="topbar-avatar" aria-label="관리자 프로필"><i class="bi bi-person-fill" aria-hidden="true"></i></span>
+                </div>
+            </header>
+
+            <main class="dashboard-content products-content">
+                <section class="welcome-row products-welcome" aria-labelledby="productsTitle">
+                    <div><p class="section-kicker">CATALOG MANAGEMENT</p><h2 id="productsTitle">상품 목록</h2><p class="welcome-copy">상품 정보를 확인하고 카탈로그를 관리하세요.</p></div>
+                    <button class="primary-button" id="openCreateDialog" type="button"><i class="bi bi-plus-lg" aria-hidden="true"></i>상품 등록</button>
+                </section>
+
+                <section class="product-toolbar" aria-label="상품 검색 및 필터">
+                    <label class="product-search"><i class="bi bi-search" aria-hidden="true"></i><input id="productSearch" type="search" placeholder="상품명 또는 상품코드 검색" autocomplete="off"><kbd>⌘ K</kbd></label>
+                    <label class="filter-select"><span class="visually-hidden">카테고리 필터</span><select id="categoryFilter"><option value="">전체 카테고리</option>{% for category in categories %}<option value="{{ category }}">{{ category }}</option>{% endfor %}</select><i class="bi bi-chevron-down" aria-hidden="true"></i></label>
+                    <label class="filter-select"><span class="visually-hidden">판매상태 필터</span><select id="statusFilter"><option value="">전체 판매상태</option><option value="판매중">판매중</option><option value="판매중지">판매중지</option></select><i class="bi bi-chevron-down" aria-hidden="true"></i></label>
+                    <label class="filter-select"><span class="visually-hidden">재고상태 필터</span><select id="stockFilter"><option value="">전체 재고상태</option><option value="normal">재고 정상</option><option value="low">재고 임박</option><option value="out">품절</option></select><i class="bi bi-chevron-down" aria-hidden="true"></i></label>
+                    <button class="reset-filters" id="resetFilters" type="button">초기화</button>
+                </section>
+
+                <section class="dashboard-panel products-table-panel" aria-labelledby="productTableTitle">
+                    <div class="product-table-heading">
+                        <div><h3 id="productTableTitle">전체 상품 <span class="result-count" id="resultCount">0</span></h3><p>등록된 상품을 검색하고 관리할 수 있습니다.</p></div>
+                        <span class="sample-label"><span></span>실시간 카탈로그</span>
+                    </div>
+                    <div class="table-scroll product-table-scroll">
+                        <table class="admin-table product-table">
+                            <thead><tr><th>상품 이미지</th><th>상품명</th><th>상품코드</th><th>카테고리</th><th class="align-right">판매가격</th><th class="align-right">현재 재고</th><th>판매상태</th><th>등록일</th><th class="actions-heading">관리</th></tr></thead>
+                            <tbody id="productTableBody"></tbody>
+                        </table>
+                        <div class="empty-products" id="emptyProducts" hidden><span class="empty-icon"><i class="bi bi-search" aria-hidden="true"></i></span><strong>조건에 맞는 상품이 없습니다.</strong><span>검색어나 필터를 변경해 보세요.</span></div>
+                    </div>
+                    <div class="product-table-footer"><span>표시 중 <strong id="visibleCount">0</strong>개</span><span>상품 옵션 재고와 연결됩니다.</span></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog class="admin-dialog product-form-dialog" id="productFormDialog" aria-labelledby="productFormTitle">
+        <form id="productForm" class="dialog-form">
+            <div class="dialog-header"><div><span class="section-kicker">PRODUCT DETAILS</span><h2 id="productFormTitle">상품 등록</h2></div><button class="icon-button dialog-close" type="button" data-close-dialog aria-label="닫기"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div>
+            <div class="dialog-body">
+                <div class="form-grid">
+                    <label class="form-field span-2"><span>상품명 <b>*</b></span><input name="name" required maxlength="100" placeholder="상품명을 입력하세요"></label>
+                    <label class="form-field"><span>상품코드 <b>*</b></span><input name="code" required maxlength="40" placeholder="예: VF-JW-010"></label>
+                    <label class="form-field"><span>카테고리 <b>*</b></span><select name="category" required><option value="">카테고리 선택</option>{% for category in categories %}<option value="{{ category }}">{{ category }}</option>{% endfor %}<option value="__new">직접 입력...</option></select></label>
+                    <label class="form-field span-2 new-category-field" hidden><span>새 카테고리명 <b>*</b></span><input name="new_category" maxlength="30" placeholder="새 카테고리명을 입력하세요"></label>
+                    <label class="form-field span-2"><span>상품 이미지 URL <b>*</b></span><input name="image" type="url" required placeholder="https://example.com/product.jpg"><span class="field-hint">이미지 주소를 입력하면 미리보기에 표시됩니다.</span><img class="form-image-preview" id="formImagePreview" alt="상품 이미지 미리보기" hidden></label>
+                    <label class="form-field"><span>판매가격 <b>*</b></span><span class="input-suffix"><input name="price" type="number" min="0" step="100" required placeholder="0"><i>원</i></span></label>
+                    <label class="form-field"><span>할인 가격</span><span class="input-suffix"><input name="discount_price" type="number" min="0" step="100" placeholder="미할인 시 비워두세요"><i>원</i></span></label>
+                    <label class="form-field span-2"><span>옵션 <b>*</b></span><input name="options" required maxlength="160" placeholder="예: 블랙, 화이트 / S, M, L"><span class="field-hint">옵션이 여러 개라면 쉼표로 구분해 입력하세요.</span></label>
+                    <label class="form-field"><span>재고 <b>*</b></span><span class="input-suffix"><input name="stock" type="number" min="0" step="1" required value="0"><i>개</i></span></label>
+                    <label class="form-field"><span>안전재고 <b>*</b></span><span class="input-suffix"><input name="safe_stock" type="number" min="0" step="1" required value="5"><i>개</i></span></label>
+                    <label class="form-field"><span>판매상태 <b>*</b></span><select name="status" required><option value="판매중">판매중</option><option value="판매중지">판매중지</option></select></label>
+                    <label class="form-field span-2"><span>상품 설명</span><textarea name="description" rows="3" maxlength="600" placeholder="상품의 특징과 안내 사항을 입력하세요."></textarea></label>
+                </div>
+                <p class="form-error" id="formError" role="alert" hidden></p>
+            </div>
+            <div class="dialog-footer"><button class="secondary-button" type="button" data-close-dialog>취소</button><button class="primary-button" id="saveProductButton" type="submit"><i class="bi bi-check2" aria-hidden="true"></i>등록하기</button></div>
+        </form>
+    </dialog>
+
+    <dialog class="admin-dialog detail-dialog" id="productDetailDialog" aria-labelledby="productDetailTitle">
+        <div class="dialog-header"><div><span class="section-kicker">PRODUCT PREVIEW</span><h2 id="productDetailTitle">상품 상세</h2></div><button class="icon-button dialog-close" type="button" data-close-dialog aria-label="닫기"><i class="bi bi-x-lg" aria-hidden="true"></i></button></div>
+        <div class="detail-body" id="productDetailBody"></div>
+        <div class="dialog-footer"><button class="secondary-button" type="button" data-close-dialog>닫기</button><button class="primary-button" id="detailEditButton" type="button"><i class="bi bi-pencil" aria-hidden="true"></i>수정</button></div>
+    </dialog>
+
+    <dialog class="admin-dialog confirm-dialog" id="deleteConfirmDialog" aria-labelledby="deleteDialogTitle">
+        <div class="confirm-content"><span class="confirm-icon"><i class="bi bi-trash3" aria-hidden="true"></i></span><h2 id="deleteDialogTitle">상품 삭제</h2><p>정말 이 상품을 삭제하시겠습니까?</p><strong id="deleteProductName"></strong></div>
+        <div class="dialog-footer"><button class="secondary-button" type="button" data-close-dialog>취소</button><button class="danger-button" id="confirmDeleteButton" type="button">삭제하기</button></div>
+    </dialog>
+    <div class="toast-message" id="toastMessage" role="status" aria-live="polite"></div>
+
+    <script>
+        const initialProducts = {{ products | tojson }};
+        const productsApi = {{ url_for('admin.create_product') | tojson }};
+        const tableBody = document.getElementById('productTableBody');
+        const emptyState = document.getElementById('emptyProducts');
+        const productForm = document.getElementById('productForm');
+        const formDialog = document.getElementById('productFormDialog');
+        const detailDialog = document.getElementById('productDetailDialog');
+        const deleteDialog = document.getElementById('deleteConfirmDialog');
+        const formError = document.getElementById('formError');
+        const imagePreview = document.getElementById('formImagePreview');
+        const categorySelect = productForm.elements.category;
+        let products = initialProducts;
+        let pendingDeleteId = null;
+        let currentDetailId = null;
+        let toastTimer;
+
+        async function refreshProducts() {
+            const response = await fetch(productsApi, { headers: { Accept: 'application/json' } });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || '상품 목록을 새로 불러오지 못했습니다.');
+            products = result.products;
+            syncCategoryFilters();
+            renderProducts();
+        }
+        function syncCategoryFilters() {
+            const filter = document.getElementById('categoryFilter');
+            const selectedCategory = filter.value;
+            filter.replaceChildren(new Option('전체 카테고리', ''));
+            [...new Set(products.map((product) => product.category))].sort().forEach((category) => {
+                filter.add(new Option(category, category));
+                if (![...categorySelect.options].some((option) => option.value === category)) {
+                    categorySelect.add(new Option(category, category));
+                }
+            });
+            filter.value = selectedCategory;
+        }
+
+        function escapeHTML(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
+        }
+
+        function safeImageURL(value) {
+            try {
+                const url = new URL(value, window.location.origin);
+                return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+            } catch (error) {
+                return '';
+            }
+        }
+
+        function getStockState(product) {
+            if (Number(product.stock) === 0) return 'out';
+            if (Number(product.stock) <= Number(product.safe_stock)) return 'low';
+            return 'normal';
+        }
+
+        function stockMarkup(product) {
+            const state = getStockState(product);
+            const label = state === 'out' ? '품절' : state === 'low' ? '재고 임박' : '정상';
+            return `<span class="stock-value stock-${state}">${Number(product.stock).toLocaleString('ko-KR')}개</span><small class="stock-hint stock-hint-${state}">${label}</small>`;
+        }
+
+        function statusMarkup(status) {
+            const stateClass = status === '판매중' ? 'selling' : 'stopped';
+            return `<span class="selling-badge selling-${stateClass}"><i></i>${escapeHTML(status)}</span>`;
+        }
+
+        function renderProducts() {
+            const query = document.getElementById('productSearch').value.trim().toLocaleLowerCase('ko-KR');
+            const category = document.getElementById('categoryFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const stockState = document.getElementById('stockFilter').value;
+            const filtered = products.filter((product) => {
+                const matchesQuery = !query || `${product.name} ${product.code}`.toLocaleLowerCase('ko-KR').includes(query);
+                const matchesCategory = !category || product.category === category;
+                const matchesStatus = !status || product.status === status;
+                const matchesStock = !stockState || getStockState(product) === stockState;
+                return matchesQuery && matchesCategory && matchesStatus && matchesStock;
+            });
+
+            tableBody.innerHTML = filtered.map((product) => {
+                const image = safeImageURL(product.image);
+                const regularPrice = Number(product.price) || 0;
+                const discountPrice = Number(product.discount_price) || 0;
+                const currentPrice = discountPrice > 0 ? discountPrice : regularPrice;
+                const imageMarkup = image
+                    ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">`
+                    : '';
+                return `<tr>
+                    <td><div class="product-thumb">${imageMarkup}<span class="thumb-fallback" ${image ? 'hidden' : ''}><i class="bi bi-image" aria-hidden="true"></i></span></div></td>
+                    <td><strong class="product-name-cell">${escapeHTML(product.name)}</strong><small class="product-option-cell">${escapeHTML(product.options)}</small></td>
+                    <td><span class="code-cell">${escapeHTML(product.code)}</span></td>
+                    <td><span class="category-chip">${escapeHTML(product.category)}</span></td>
+                    <td class="align-right price-cell">${discountPrice > 0 ? `<small>₩${regularPrice.toLocaleString('ko-KR')}</small>` : ''}<strong>₩${currentPrice.toLocaleString('ko-KR')}</strong></td>
+                    <td class="align-right stock-cell">${stockMarkup(product)}</td>
+                    <td>${statusMarkup(product.status)}</td>
+                    <td class="date-cell">${escapeHTML(product.registered_at)}</td>
+                    <td><div class="row-actions"><button class="row-action" type="button" data-action="detail" data-id="${escapeHTML(product.id)}" title="상세" aria-label="${escapeHTML(product.name)} 상세"><i class="bi bi-eye" aria-hidden="true"></i><span>상세</span></button><button class="row-action" type="button" data-action="edit" data-id="${escapeHTML(product.id)}" title="수정" aria-label="${escapeHTML(product.name)} 수정"><i class="bi bi-pencil" aria-hidden="true"></i><span>수정</span></button><button class="row-action row-action-delete" type="button" data-action="delete" data-id="${escapeHTML(product.id)}" title="삭제" aria-label="${escapeHTML(product.name)} 삭제"><i class="bi bi-trash3" aria-hidden="true"></i><span>삭제</span></button></div></td>
+                </tr>`;
+            }).join('');
+
+            emptyState.hidden = filtered.length !== 0;
+            document.getElementById('resultCount').textContent = products.length.toLocaleString('ko-KR');
+            document.getElementById('visibleCount').textContent = filtered.length.toLocaleString('ko-KR');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toastMessage');
+            toast.textContent = message;
+            toast.classList.add('is-visible');
+            window.clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => toast.classList.remove('is-visible'), 2600);
+        }
+
+        function resetProductForm() {
+            productForm.reset();
+            productForm.dataset.productId = '';
+            productForm.elements.stock.value = '0';
+            productForm.elements.safe_stock.value = '5';
+            productForm.elements.new_category.value = '';
+            productForm.elements.new_category.required = false;
+            productForm.querySelector('.new-category-field').hidden = true;
+            imagePreview.hidden = true;
+            imagePreview.removeAttribute('src');
+            formError.hidden = true;
+            document.getElementById('productFormTitle').textContent = '상품 등록';
+            document.getElementById('saveProductButton').innerHTML = '<i class="bi bi-check2" aria-hidden="true"></i>등록하기';
+        }
+
+        function openCreateDialog() {
+            resetProductForm();
+            formDialog.showModal();
+            productForm.elements.name.focus();
+        }
+
+        function openEditDialog(product) {
+            resetProductForm();
+            productForm.dataset.productId = product.id;
+            for (const field of ['name', 'code', 'category', 'image', 'price', 'discount_price', 'options', 'stock', 'safe_stock', 'status', 'description']) {
+                productForm.elements[field].value = product[field] ?? '';
+            }
+            if (![...categorySelect.options].some((option) => option.value === product.category)) {
+                categorySelect.add(new Option(product.category, product.category));
+            }
+            categorySelect.value = product.category;
+            updateImagePreview(product.image);
+            document.getElementById('productFormTitle').textContent = '상품 수정';
+            document.getElementById('saveProductButton').innerHTML = '<i class="bi bi-check2" aria-hidden="true"></i>변경 저장';
+            formDialog.showModal();
+            productForm.elements.name.focus();
+        }
+
+        function updateImagePreview(value) {
+            const image = safeImageURL(value);
+            imagePreview.hidden = !image;
+            if (image) imagePreview.src = image;
+        }
+
+        function openDetailDialog(product) {
+            currentDetailId = product.id;
+            const image = safeImageURL(product.image);
+            const currentPrice = Number(product.discount_price) > 0 ? Number(product.discount_price) : Number(product.price);
+            document.getElementById('productDetailBody').innerHTML = `
+                <div class="detail-product-top">
+                    <div class="detail-image">${image ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}">` : '<i class="bi bi-image" aria-hidden="true"></i>'}</div>
+                    <div><span class="category-chip">${escapeHTML(product.category)}</span><h3>${escapeHTML(product.name)}</h3><span class="code-cell">${escapeHTML(product.code)}</span></div>
+                </div>
+                <dl class="detail-grid">
+                    <div><dt>판매가격</dt><dd>₩${Number(product.price).toLocaleString('ko-KR')}</dd></div>
+                    <div><dt>할인 가격</dt><dd>${Number(product.discount_price) ? `₩${Number(product.discount_price).toLocaleString('ko-KR')}` : '미할인'}</dd></div>
+                    <div><dt>현재 재고</dt><dd>${Number(product.stock).toLocaleString('ko-KR')}개</dd></div>
+                    <div><dt>안전재고</dt><dd>${Number(product.safe_stock).toLocaleString('ko-KR')}개</dd></div>
+                    <div><dt>옵션</dt><dd>${escapeHTML(product.options)}</dd></div>
+                    <div><dt>판매상태</dt><dd>${statusMarkup(product.status)}</dd></div>
+                    <div><dt>등록일</dt><dd>${escapeHTML(product.registered_at)}</dd></div>
+                    <div><dt>판매가</dt><dd>₩${currentPrice.toLocaleString('ko-KR')}</dd></div>
+                    <div class="detail-description"><dt>상품 설명</dt><dd>${escapeHTML(product.description || '등록된 설명이 없습니다.')}</dd></div>
+                </dl>`;
+            detailDialog.showModal();
+        }
+
+        document.getElementById('openCreateDialog').addEventListener('click', openCreateDialog);
+        document.getElementById('productSearch').addEventListener('input', renderProducts);
+        ['categoryFilter', 'statusFilter', 'stockFilter'].forEach((id) => document.getElementById(id).addEventListener('change', renderProducts));
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            document.getElementById('productSearch').value = '';
+            ['categoryFilter', 'statusFilter', 'stockFilter'].forEach((id) => { document.getElementById(id).value = ''; });
+            renderProducts();
+        });
+
+        categorySelect.addEventListener('change', () => {
+            const newCategoryField = productForm.querySelector('.new-category-field');
+            const useNewCategory = categorySelect.value === '__new';
+            newCategoryField.hidden = !useNewCategory;
+            productForm.elements.new_category.required = useNewCategory;
+            if (useNewCategory) productForm.elements.new_category.focus();
+        });
+
+        productForm.elements.image.addEventListener('input', (event) => updateImagePreview(event.target.value));
+        imagePreview.addEventListener('error', () => { imagePreview.hidden = true; });
+
+        productForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            formError.hidden = true;
+            if (!productForm.reportValidity()) return;
+
+            const formData = new FormData(productForm);
+            const code = String(formData.get('code')).trim();
+            const existingId = productForm.dataset.productId;
+            const duplicateCode = products.some((product) => product.code.toLocaleLowerCase('ko-KR') === code.toLocaleLowerCase('ko-KR') && product.id !== existingId);
+            const price = Number(formData.get('price'));
+            const discountPrice = Number(formData.get('discount_price')) || 0;
+            if (duplicateCode) {
+                formError.textContent = '이미 등록된 상품코드입니다.';
+                formError.hidden = false;
+                productForm.elements.code.focus();
+                return;
+            }
+            if (discountPrice > price) {
+                formError.textContent = '할인 가격은 판매가격보다 높을 수 없습니다.';
+                formError.hidden = false;
+                productForm.elements.discount_price.focus();
+                return;
+            }
+
+            const selectedCategory = formData.get('category') === '__new' ? String(formData.get('new_category')).trim() : formData.get('category');
+            if (!selectedCategory) {
+                formError.textContent = '카테고리를 선택하거나 새 카테고리명을 입력하세요.';
+                formError.hidden = false;
+                return;
+            }
+            const product = {
+                name: String(formData.get('name')).trim(),
+                code,
+                category: selectedCategory,
+                image: String(formData.get('image')).trim(),
+                price,
+                discount_price: discountPrice,
+                options: String(formData.get('options')).trim(),
+                stock: Number(formData.get('stock')),
+                safe_stock: Number(formData.get('safe_stock')),
+                status: formData.get('status'),
+                description: String(formData.get('description')).trim(),
+            };
+            const saveButton = document.getElementById('saveProductButton');
+            saveButton.disabled = true;
+            saveButton.classList.add('is-loading');
+            try {
+                const response = await fetch(existingId ? `${productsApi}/${encodeURIComponent(existingId)}` : productsApi, {
+                    method: existingId ? 'PATCH' : 'POST',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    body: JSON.stringify(product),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || '상품을 저장하지 못했습니다.');
+                await refreshProducts();
+                formDialog.close();
+                showToast(existingId ? '상품 정보를 수정했습니다.' : '상품을 등록했습니다.');
+            } catch (error) {
+                formError.textContent = error.message;
+                formError.hidden = false;
+            } finally {
+                saveButton.disabled = false;
+                saveButton.classList.remove('is-loading');
+            }
+        });
+
+        tableBody.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-action]');
+            if (!button) return;
+            const product = products.find((item) => item.id === button.dataset.id);
+            if (!product) return;
+            if (button.dataset.action === 'detail') openDetailDialog(product);
+            if (button.dataset.action === 'edit') openEditDialog(product);
+            if (button.dataset.action === 'delete') {
+                pendingDeleteId = product.id;
+                document.getElementById('deleteProductName').textContent = product.name;
+                deleteDialog.showModal();
+            }
+        });
+
+        document.getElementById('detailEditButton').addEventListener('click', () => {
+            const product = products.find((item) => item.id === currentDetailId);
+            detailDialog.close();
+            if (product) openEditDialog(product);
+        });
+
+        document.getElementById('confirmDeleteButton').addEventListener('click', async (event) => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            try {
+                const response = await fetch(`${productsApi}/${encodeURIComponent(pendingDeleteId)}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || '상품을 삭제하지 못했습니다.');
+                await refreshProducts();
+                pendingDeleteId = null;
+                deleteDialog.close();
+                showToast('상품을 삭제했습니다.');
+            } catch (error) {
+                showToast(error.message);
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+        document.querySelectorAll('[data-close-dialog]').forEach((button) => {
+            button.addEventListener('click', () => button.closest('dialog').close());
+        });
+        [formDialog, detailDialog, deleteDialog].forEach((dialog) => {
+            dialog.addEventListener('click', (event) => {
+                if (event.target === dialog) dialog.close();
+            });
+        });
+
+        const sidebar = document.getElementById('adminSidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+        function setSidebarOpen(isOpen) {
+            sidebar.classList.toggle('is-open', isOpen);
+            sidebarBackdrop.classList.toggle('is-visible', isOpen);
+            menuToggle.setAttribute('aria-expanded', String(isOpen));
+        }
+        menuToggle.addEventListener('click', () => setSidebarOpen(!sidebar.classList.contains('is-open')));
+        sidebarBackdrop.addEventListener('click', () => setSidebarOpen(false));
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') setSidebarOpen(false);
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
+                document.getElementById('productSearch').focus();
+            }
+        });
+
+        syncCategoryFilters();
+        renderProducts();
+    </script>
+</body>
+</html>
